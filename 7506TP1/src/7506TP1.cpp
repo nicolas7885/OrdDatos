@@ -6,10 +6,15 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
-#include <iostream>
+#include "FileHandler.h"
 using namespace std;
 
-int main() {
-	cout << "Hello World!!!" << endl; // prints Hello World!!!
+#define MODE_PARAM 1
+#define MODE_NEW 1
+
+int main(int argc, char* argv[]) {
+	//todo modes
+	//todo use arguments
+	FileHandler handler("testNew.bin",2,"i1,i4,sD,d");
 	return 0;
 }

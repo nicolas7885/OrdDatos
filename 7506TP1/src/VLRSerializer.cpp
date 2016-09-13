@@ -10,16 +10,15 @@
 #include <vector>
 #include <cstring>
 #include "VLRegistry.h"
-
-#define DATE_SIZE 8
-#define DATETIME_SIZE 15
+#include "Field.h"
 
 VLRSerializer::VLRSerializer() {}
 
 VLRSerializer::~VLRSerializer() {}
 
-std::vector<char> VLRSerializer::serializeReg(const VLRegistry& reg) {
-	std::vector<char> serializedData;
+/*adds to end of serializedData the serialized contents of reg
+ * note: this has absolute coupling with VLRegistry*/
+void VLRSerializer::serializeReg(std::vector<char>& serializedData, const VLRegistry& reg) {
 	int numOfFields=reg.getNumOfFields();
 	//todo error in case theres too many
 	serializedData.push_back(numOfFields);
@@ -77,5 +76,13 @@ std::vector<char> VLRSerializer::serializeReg(const VLRegistry& reg) {
 		}
 		serializedData.insert(serializedData.end(),fieldData.begin(),fieldData.end());
 	}
-	return serializedData;
+}
+
+/*adds to end of serialized data the serialized block*/
+void VLRSerializer::serializeBlock(std::vector<char>& serializedData,
+		const std::vector<VLRegistry>& data) {
+	serializedData.push_back(data.size());
+	for(int i=0; i<data.size(); i++){
+		serializeReg(serializedData,data[i]);
+	}
 }

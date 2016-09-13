@@ -8,6 +8,9 @@
 #ifndef FIELD_H_
 #define FIELD_H_
 
+#define DATE_SIZE 8
+#define DATETIME_SIZE 15
+
 union FieldValue{
 	char i1;
 	short int i2;

@@ -13,6 +13,7 @@
 #include <sstream>
 #include <algorithm>
 #include "VLRegistry.h"
+#include "VLRSerializer.h"
 
 #define CHUNK_SIZE 512
 #define METADATA_SIZE CHUNK_SIZE
@@ -30,7 +31,7 @@ FileHandler::FileHandler(std::string path)
 
 /*pre: path is a valid path, bSize is block size, between 1 and 4, format is valid
  * post: creates and opens new block file at path, with blocks of 2^bSize *512 bytes
- * 	with the given format, and an empty bit-map.
+ * 	with the given format, and an empty bit-map. If file exists, its overriden
  * 	Available blocks in bitmap depend on number of fields in format and bSize */
 FileHandler::FileHandler(std::string path, uint bSize, std::string format)
 :bSize(bSize),
@@ -57,7 +58,8 @@ FileHandler::~FileHandler() {
  * then updates the byte map, and returns 0.*/
 int FileHandler::write(const std::vector<VLRegistry> &data) {
 	std::vector<char> serializedData;
-	//todo serialize
+	VLRSerializer serializer;
+	serializer.serializeBlock(serializedData,data);
 	int relPos=0;
 	std::vector<char>::iterator freeBlockSpaceIt=byteMap.begin();
 	for(; freeBlockSpaceIt!=byteMap.end() && *freeBlockSpaceIt!=0; freeBlockSpaceIt++){
@@ -74,7 +76,8 @@ int FileHandler::write(const std::vector<VLRegistry> &data) {
 int FileHandler::write(const std::vector<VLRegistry> &data, int relPos) {
 	if(relPos>=byteMap.size()) return -2;//bounds check
 	std::vector<char> serializedData;
-	//todo serialize
+	VLRSerializer serializer;
+	serializer.serializeBlock(serializedData,data);
 	return writeBin(relPos, serializedData);
 }
 

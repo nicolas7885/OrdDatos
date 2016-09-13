@@ -16,7 +16,8 @@ class VLRSerializer {
 public:
 	VLRSerializer();
 	virtual ~VLRSerializer();
-	std::vector<char> serializeReg(const VLRegistry &reg);
+	void serializeReg(std::vector<char> &serializedData,const VLRegistry &reg);
+	void serializeBlock(std::vector<char> &serializedData,const std::vector<VLRegistry> &data);
 };
 
 #endif /* VLRSERIALIZER_H_ */
