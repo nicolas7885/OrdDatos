@@ -6,9 +6,10 @@
  */
 
 #include "Field.h"
+#include <string>
 
 FieldType fromString(const std::string& field) {
-	FieldType fieldId = 0;
+	FieldType fieldId ;
 	if (field == "i1")
 		fieldId = I1;
 
@@ -35,3 +36,5 @@ FieldType fromString(const std::string& field) {
 
 	return fieldId;
 }
+
+

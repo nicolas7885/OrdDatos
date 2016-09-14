@@ -52,16 +52,11 @@ void VLRegistry::addEmptyField(FieldType type) {
 		field.value.i8 = 0;
 		break;
 	case SD:
-		field.value.sD = "";
-		break;
 	case SL:
-		field.value.sL = "";
-		break;
 	case D:
-		field.value.d = "";
-		break;
 	case DT:
-		field.value.dt = "";
+		field.value.i8=0;
+		field.s = "";
 		break;
 	}
 	fields.push_back(field);

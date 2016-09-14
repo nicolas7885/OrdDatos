@@ -9,8 +9,7 @@
 #define VLRSERIALIZER_H_
 
 #include <vector>
-
-class VLRegistry;
+#include "VLRegistry.h"
 
 class VLRSerializer {
 public:

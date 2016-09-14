@@ -21,12 +21,12 @@
 /*creates file handler for file in path. Reads metadata and byteMap.
  * */
 FileHandler::FileHandler(std::string path)
-:fs(path),
- metadata(METADATA_SIZE){
+:metadata(METADATA_SIZE),
+ fs(path){
 	fs.read(&metadata[0],METADATA_SIZE);//leo metadata
 	bSize=metadata[0];
-	byteMap.resize((uint)blockSizeInBytes);
-	fs.read(&byteMap[0],(int)blockSizeInBytes);//leo mapa bytes
+	byteMap.resize((uint)blockSizeInBytes());
+	fs.read(&byteMap[0],(int)blockSizeInBytes());//leo mapa bytes
 }
 
 /*pre: path is a valid path, bSize is block size, between 1 and 4, format is valid
@@ -36,7 +36,7 @@ FileHandler::FileHandler(std::string path)
 FileHandler::FileHandler(std::string path, uint bSize, std::string format)
 :bSize(bSize),
  metadata(METADATA_SIZE),
- byteMap(blockSizeInBytes),
+ byteMap(blockSizeInBytes()),
  fs(path.c_str(),std::ios::binary|std::ios::trunc){
 	metadata[0]=bSize;
 	setFormat(format);
@@ -74,7 +74,7 @@ int FileHandler::write(const std::vector<VLRegistry> &data) {
 
 /*if out of bounds returns-2, else calls writeBin*/
 int FileHandler::write(const std::vector<VLRegistry> &data, int relPos) {
-	if(relPos>=byteMap.size()) return -2;//bounds check
+	if((uint)relPos>=byteMap.size()) return -2;//bounds check
 	std::vector<char> serializedData;
 	VLRSerializer serializer;
 	serializer.serializeBlock(serializedData,data);
@@ -132,7 +132,7 @@ bool FileHandler::eof() {
 	return fs.eof();
 }
 
-int FileHandler::blockSizeInBytes() {
+uint FileHandler::blockSizeInBytes() {
 	uint blockSizeInBytes = 0x01;
 	blockSizeInBytes <<= bSize;
 	blockSizeInBytes *= CHUNK_SIZE;
@@ -147,7 +147,7 @@ void FileHandler::rewriteByteMap() {
 
 long int FileHandler::calculateOffset(int relPos) {
 	long int offset = metadata.size()+ byteMap.size();
-	offset += relPos * blockSizeInBytes;
+	offset += relPos * blockSizeInBytes();
 	return offset;
 }
 

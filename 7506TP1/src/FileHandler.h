@@ -8,9 +8,11 @@
 #ifndef FILEHANDLER_H_
 #define FILEHANDLER_H_
 
-#include <iostream>
-#include <vector>
+#include <fstream>
 #include <string>
+#include <vector>
+
+#include "VLRegistry.h"
 
 class VLRegistry;
 
@@ -36,7 +38,7 @@ public:
 	bool eof();
 
 private:
-	int blockSizeInBytes();
+	uint blockSizeInBytes();
 	void setFormat(std::string format);
 	void rewriteByteMap();
 	long int calculateOffset(int relPos);

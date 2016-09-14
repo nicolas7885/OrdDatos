@@ -11,8 +11,7 @@
 #include <vector>
 
 #include "Field.h"
-
-class VLRegistry;
+#include "VLRegistry.h"
 
 class VLRUnserializer {
 	std::vector<FieldType> format;

@@ -23,7 +23,7 @@ VLRUnserializer::~VLRUnserializer() {}
 void VLRUnserializer::unserializeReg(VLRegistry &output, std::vector<char> serializedData) {
 	//todo exceptions
 	std::vector<char>::iterator dataIt=serializedData.begin();
-	for(int i=0; i<format.size(); i++){
+	for(uint i=0; i<format.size(); i++){
 		Field field;
 		field.type=format[i];
 		char* cp;
@@ -35,51 +35,49 @@ void VLRUnserializer::unserializeReg(VLRegistry &output, std::vector<char> seria
 		case I2:
 			cp=&(*dataIt);//todo check if it works
 			dataIt+=sizeof(short int);
-			short int* sip=reinterpret_cast<short int*>(cp);
+			short int* sip;
+			sip=reinterpret_cast<short int*>(cp);
 			field.value.i2=*sip;
 			break;
 		case I4:
 			cp=&(*dataIt);//todo check if it works
 			dataIt+=sizeof(int);
-			int* ip=reinterpret_cast<char*>(cp);
+			int* ip;
+			ip=reinterpret_cast<int*>(cp);
 			field.value.i4=*ip;
 			break;
 		case I8:
 			cp=&(*dataIt);//todo check if it works
 			dataIt+=sizeof(long int);
-			long int* lip=reinterpret_cast<long int*>(cp);
+			long int* lip;
+			lip=reinterpret_cast<long int*>(cp);
 			field.value.i8=*lip;
 			break;
 		case SD:
-			field.value.sD=std::string();
 			while(*dataIt != 0){
-				field.value.sD+=*dataIt;
+				field.s+=*dataIt;
 				dataIt++;
 			}
 			dataIt++;//avoid null character
 			break;
 		case SL:
-			char length=*dataIt;
+			char length;
+			length=*dataIt;
 			dataIt++;
-			field.value.sL=std::string();
 			for(int i=1; i<=length; i++){
-				field.value.sL+=*dataIt;
+				field.s+=*dataIt;
 				dataIt++;
 			}
 			break;
 		case D:
-			field.value.d=std::string();
 			for(int i=1; i<=DATE_SIZE; i++){
-				field.value.d+=*dataIt;
+				field.s+=*dataIt;
 				dataIt++;
 			}
 			break;
 		case DT:
-			//todo check if this works, needs change, or can be reduced
-			field.value.dt=*dataIt;
-			dataIt++;
 			for(int i=1; i<=DATETIME_SIZE; i++){
-				field.value.dt+=*dataIt;
+				field.s+=*dataIt;
 				dataIt++;
 			}
 			break;
