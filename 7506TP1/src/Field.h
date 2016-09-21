@@ -26,6 +26,7 @@ enum FieldType{
 
 /*This is a little ugly class to handle fields,
  * you have to check its type and decide how to access it, horrible but simple*/
+//todo change to class with methods to become each type
 struct Field {
 	union{
 		char i1;

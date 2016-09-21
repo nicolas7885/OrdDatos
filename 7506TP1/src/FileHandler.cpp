@@ -14,6 +14,7 @@
 #include <algorithm>
 #include "VLRegistry.h"
 #include "VLRSerializer.h"
+#include "Field.h"
 
 #define CHUNK_SIZE 512
 #define METADATA_SIZE CHUNK_SIZE
@@ -37,7 +38,8 @@ FileHandler::FileHandler(std::string path, uint bSize, std::string format)
 :bSize(bSize),
  metadata(METADATA_SIZE),
  byteMap(blockSizeInBytes()),
- fs(path.c_str(),std::ios::binary|std::ios::trunc){
+ fs(path.c_str(),std::ios_base::in | std::ios_base::out|std::ios::binary|std::ios::trunc)
+{
 	metadata[0]=bSize;
 	setFormat(format);
 
@@ -87,7 +89,9 @@ int FileHandler::write(const std::vector<VLRegistry> &data, int relPos) {
 void FileHandler::read(std::vector<VLRegistry>& data) {
 	std::vector<char> serializedData(blockSizeInBytes());
 	fs.read(&serializedData[0],(uint)blockSizeInBytes());
-	//todo unserialize
+
+	VLRUnserializer unserializer(getFormatAsTypes());
+	unserializer.unserializeBlock(data,serializedData);
 }
 
 
@@ -108,6 +112,40 @@ void FileHandler::deleteBlock(int relPos) {
 	}
 }
 
+//todo remove this??
+std::string FileHandler::getFormatAsString() {
+	std::stringstream format;
+	for(int i=1; i<=metadata[1]; i++){
+		switch(metadata[1+i]){
+		case I1:
+			format<<"i1";
+			break;
+		case I2:
+			format<<"i2";
+			break;
+		case I4:
+			format<<"i4";
+			break;
+		case I8:
+			format<<"i8";
+			break;
+		case SD:
+			format<<"sD";
+			break;
+		case SL:
+			format<<"sL";
+			break;
+		case D:
+			format<<"d";
+			break;
+		case DT:
+			format<<"dT";
+			break;
+		}
+	}
+	return format.str();
+}
+
 /******************************************private*********************************************/
 
 /*attempts to write data into the specified block.
@@ -121,7 +159,7 @@ int FileHandler::writeBin(int relPos,const std::vector<char>& data) {
 	byteMap[relPos]=(char) percentage;
 
 	fs.seekg(calculateOffset(relPos), std::ios_base::beg);
-	std::vector<char> block(blockSizeInBytes());
+	std::vector<char> block(blockSizeInBytes());//to get 0 filled vector
 	std::copy(data.begin(),data.end(),block.begin());
 	fs.write(&block[0], blockSizeInBytes());
 	rewriteByteMap();
@@ -153,14 +191,19 @@ long int FileHandler::calculateOffset(int relPos) {
 
 void FileHandler::setFormat(std::string format) {
 	std::replace(format.begin(), format.end(), ',', ' ');
-	std::stringstream ss(format);
+	std::stringstream ss("i4 "+format);
 	std::string field;
 	while (ss >> field) {
 		char fieldId = fromString(field);//auto cast here
-		if (fieldId != 0) {
-			metadata[1]++;
-			metadata[metadata[1]] = fieldId;
-		}
+		metadata[1]++;
+		metadata[metadata[1]+1] = fieldId;
 	}
 }
 
+std::vector<FieldType> FileHandler::getFormatAsTypes() {
+	std::vector<FieldType> types(metadata[1]);
+	for(int i=0; i<metadata[1]; i++){
+		types[i]=static_cast<FieldType>(metadata[2+i]);
+	}
+	return types;
+}

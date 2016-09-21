@@ -13,12 +13,15 @@
 #include "Field.h"
 #include "VLRegistry.h"
 
+typedef std::vector<char>::iterator dataIt_t;
+
 class VLRUnserializer {
 	std::vector<FieldType> format;
 public:
 	VLRUnserializer(std::vector<FieldType> format);
 	virtual ~VLRUnserializer();
-	void unserializeReg(VLRegistry &output, std::vector<char> serializedData);
+	void unserializeReg(VLRegistry &output,const std::vector<char> &serializedData,dataIt_t &begin);
+	void unserializeBlock(std::vector<VLRegistry> &block, const std::vector<char> &serializedData);
 };
 
 #endif /* SRC_VLRUNSERIALIZER_H_ */

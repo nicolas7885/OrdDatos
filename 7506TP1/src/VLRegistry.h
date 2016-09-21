@@ -21,8 +21,8 @@ public:
 	Field getField(int id) const;
 	void setField(int id,const Field& field);
 	int getNumOfFields() const;
-private:
 	void addEmptyField(FieldType type);
+private:
 	void addId(int id);
 };
 

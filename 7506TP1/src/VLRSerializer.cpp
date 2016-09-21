@@ -21,8 +21,9 @@ VLRSerializer::~VLRSerializer() {}
 void VLRSerializer::serializeReg(std::vector<char>& serializedData, const VLRegistry& reg) {
 	int numOfFields=reg.getNumOfFields();
 	//todo error in case theres too many
-	serializedData.push_back(numOfFields);
-
+	//uncomment this if num of fields is variable
+	//serializedData.push_back(numOfFields);
+	//todo its backwards!!!!!
 	for(int i=0; i<numOfFields; i++){
 		Field field=reg.getField(i);
 		std::vector<char> fieldData;
@@ -82,10 +83,12 @@ void VLRSerializer::serializeReg(std::vector<char>& serializedData, const VLRegi
 	}
 }
 
-/*adds to end of serialized data the serialized block*/
+/*pre: data has less thn 255 registries
+ * post:adds to end of serialized data the serialized block*/
 void VLRSerializer::serializeBlock(std::vector<char>& serializedData,
 		const std::vector<VLRegistry>& data) {
-	serializedData.push_back(data.size());
+	//todo check amount of reg
+	serializedData.push_back((char)data.size());
 	for(uint i=0; i<data.size(); i++){
 		serializeReg(serializedData,data[i]);
 	}

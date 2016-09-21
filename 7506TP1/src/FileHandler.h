@@ -13,6 +13,8 @@
 #include <vector>
 
 #include "VLRegistry.h"
+#include "VLRUnserializer.h"
+#include "Field.h"
 
 class VLRegistry;
 
@@ -36,10 +38,12 @@ public:
 	void read(std::vector<VLRegistry> &data,int relPos);
 	void deleteBlock(int relPos);
 	bool eof();
+	std::string getFormatAsString();
 
 private:
 	uint blockSizeInBytes();
 	void setFormat(std::string format);
+	std::vector<FieldType> getFormatAsTypes();
 	void rewriteByteMap();
 	long int calculateOffset(int relPos);
 	int writeBin(int relPos, const std::vector<char>& serializedData);
