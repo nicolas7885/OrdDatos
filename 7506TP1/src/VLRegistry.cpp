@@ -17,13 +17,13 @@ VLRegistry::VLRegistry(int id, std::string format){
 	std::stringstream ss(format);
 	std::string fieldType;
 	while (ss >> fieldType) {
-		addEmptyField(fromString(fieldType));
+		addEmptyField(typeFromString(fieldType));
 	}
 }
 
-VLRegistry::~VLRegistry() {
-	// TODO Auto-generated destructor stub
-}
+VLRegistry::VLRegistry() {}
+
+VLRegistry::~VLRegistry() {}
 
 Field VLRegistry::getField(int id) const{
 	//todo check bounds
@@ -72,3 +72,5 @@ void VLRegistry::addId(int id) {
 int VLRegistry::getNumOfFields() const{
 	return fields.size();
 }
+
+

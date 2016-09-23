@@ -8,7 +8,7 @@
 #include "Field.h"
 #include <string>
 
-FieldType fromString(const std::string& field) {
+FieldType typeFromString(const std::string& field) {
 	//todo error if none
 	FieldType fieldId ;
 	if (field == "i1")

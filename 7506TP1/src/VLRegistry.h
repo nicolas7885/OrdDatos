@@ -17,6 +17,7 @@ class VLRegistry {
 	std::vector<Field> fields;
 public:
 	VLRegistry(int id, std::string format);
+	VLRegistry();
 	virtual ~VLRegistry();
 	Field getField(int id) const;
 	void setField(int id,const Field& field);

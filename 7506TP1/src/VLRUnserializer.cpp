@@ -6,12 +6,13 @@
  */
 
 #include "VLRUnserializer.h"
+#include "VLRegistry.h"
 #include <vector>
 #include "Field.h"
 
-VLRUnserializer::VLRUnserializer(std::vector<FieldType> format)
+VLRUnserializer::VLRUnserializer(std::vector<FieldType> &format)
 :format(format){
-	this->format.insert(format.begin(),I4);//adds id to the format
+	this->format.insert(this->format.begin(),I4);//adds id to the format
 }
 
 VLRUnserializer::~VLRUnserializer() {}
@@ -20,13 +21,13 @@ VLRUnserializer::~VLRUnserializer() {}
  * output has same format as unserializer
  * post:takes the serialized registry and turns it into a VLRegistry according to the specified format
  * of the unserializer. dataIt points to last pos read*/
-void VLRUnserializer::unserializeReg(VLRegistry &output,const std::vector<char> &serializedData, dataIt_t &dataIt) {
+void VLRUnserializer::unserializeReg(VLRegistry &output,
+		const std::vector<char> &serializedData,dataIt_t &dataIt) {
 	//todo exceptions
-	long int bytesRead=0;
 	for(uint i=0; i<format.size(); i++){
 		Field field;
 		field.type=format[i];
-		char* cp;
+		char const * cp;
 		switch(field.type){
 		case I1:
 			field.value.i1=*dataIt;
@@ -35,22 +36,22 @@ void VLRUnserializer::unserializeReg(VLRegistry &output,const std::vector<char> 
 		case I2:
 			cp=&(*dataIt);//todo check if it works
 			dataIt+=sizeof(short int);
-			short int* sip;
-			sip=reinterpret_cast<short int*>(cp);
+			short int const* sip;
+			sip=reinterpret_cast<short int const*>(cp);
 			field.value.i2=*sip;
 			break;
 		case I4:
 			cp=&(*dataIt);//todo check if it works
 			dataIt+=sizeof(int);
-			int* ip;
-			ip=reinterpret_cast<int*>(cp);
+			int const* ip;
+			ip=reinterpret_cast<int const*>(cp);
 			field.value.i4=*ip;
 			break;
 		case I8:
 			cp=&(*dataIt);//todo check if it works
 			dataIt+=sizeof(long int);
-			long int* lip;
-			lip=reinterpret_cast<long int*>(cp);
+			long int const* lip;
+			lip=reinterpret_cast<long int const*>(cp);
 			field.value.i8=*lip;
 			break;
 		case SD:
@@ -86,19 +87,21 @@ void VLRUnserializer::unserializeReg(VLRegistry &output,const std::vector<char> 
 	}
 }
 
+void VLRUnserializer::reziseBlock(int newSize, std::vector<VLRegistry>& block) {
+	VLRegistry newReg;
+	for (uint j = 0; j < format.size(); j++) {
+		newReg.addEmptyField(format[j]);
+	}
+	block.resize(newSize, newReg);
+}
+
 /*pre: serializedData has the format indicated for unserializer
  * post: fills block with the unserialized registries*/
 void VLRUnserializer::unserializeBlock(std::vector<VLRegistry>& block,
 		const std::vector<char>& serializedData) {
+	reziseBlock(serializedData[0], block);
 	dataIt_t dataIt=serializedData.begin();
 	dataIt++;//avoid num of reg
-	for(int i=1; i<= serializedData[0]; i++){
-		VLRegistry newReg;
-		for(int j=0; j<format.size(); j++){
-			newReg.addEmptyField(format[j]);
-		}
-		block.push_back(newReg);
-	}
 	for(int i=0; i<serializedData[0]; i++){
 		unserializeReg(block[i],serializedData,dataIt);
 	}

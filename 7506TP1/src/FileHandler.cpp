@@ -23,7 +23,9 @@
  * */
 FileHandler::FileHandler(std::string path)
 :metadata(METADATA_SIZE),
- fs(path){
+ fs(path),
+ nextRelPos(0),
+ bufferPos(0){
 	fs.read(&metadata[0],METADATA_SIZE);//leo metadata
 	bSize=metadata[0];
 	byteMap.resize((uint)blockSizeInBytes());
@@ -38,17 +40,16 @@ FileHandler::FileHandler(std::string path, uint bSize, std::string format)
 :bSize(bSize),
  metadata(METADATA_SIZE),
  byteMap(blockSizeInBytes()),
- fs(path.c_str(),std::ios_base::in | std::ios_base::out|std::ios::binary|std::ios::trunc)
-{
+ fs(path.c_str(),std::ios_base::in | std::ios_base::out|std::ios::binary|std::ios::trunc),
+ nextRelPos(0),
+ bufferPos(0){
 	metadata[0]=bSize;
 	setFormat(format);
 
 	fs.write(&metadata[0], metadata.size());
 	rewriteByteMap();//initializes byteMap as empty
-	fs.seekp(metadata.size()+byteMap.size(),std::ios_base::beg);//prepare for secuential reading
+	fs.seekp(calculateOffset(0),std::ios_base::beg);
 }
-
-
 
 FileHandler::~FileHandler() {
 	// TODO nothing for now
@@ -84,23 +85,65 @@ int FileHandler::write(const std::vector<VLRegistry> &data, int relPos) {
 }
 
 /*attempts to read the next block and put the information into data.
- * Does nothing if EOF is reached before adding anything to data
- * If EOF is reached stops reading*/
+ * Does nothing if EOF is reached before adding anything to data.
+ * If EOF is reached stops reading. Also reads empty blocks*/
 void FileHandler::read(std::vector<VLRegistry>& data) {
-	std::vector<char> serializedData(blockSizeInBytes());
-	fs.read(&serializedData[0],(uint)blockSizeInBytes());
-
-	VLRUnserializer unserializer(getFormatAsTypes());
-	unserializer.unserializeBlock(data,serializedData);
+	if(!fs.eof()){
+		std::vector<char> serializedData(blockSizeInBytes());
+		fs.read(&serializedData[0],(uint)blockSizeInBytes());//todo error if eof
+		std::vector<FieldType> format=getFormatAsTypes();
+		VLRUnserializer unserializer(format);
+		unserializer.unserializeBlock(data,serializedData);
+		nextRelPos++;
+	}
 }
-
-
 
 /*pre: relPos is in map, and its valid
  * post:reads the block at the position given*/
 void FileHandler::read(std::vector<VLRegistry>& data, int relPos) {
 	fs.seekp(calculateOffset(relPos),std::ios_base::beg);
+	nextRelPos=relPos;
 	this->read(data);
+}
+
+/*attempts to write the reg into current block. If overflow, goes to next block.
+ * Does nothing and returns -1 if EOF is reached before writing.
+ * If write is succesful returns num of block where it ended in.*/
+int FileHandler::writeNext(VLRegistry & reg){
+	bool notWritten=true;
+	while(notWritten && !this->eof()){
+		int relPos=nextRelPos-1;//try current block
+		std::vector<VLRegistry> block;
+		read(block,relPos);
+		block.push_back(reg);
+		if(write(block,relPos)==0)
+			notWritten=false;
+	}
+	if(notWritten)
+		return -1;
+	else
+		return nextRelPos-1;
+}
+
+/*attempts to read the next non empty block and put the information into data.
+ * Does nothing and returns false if EOF is reached before adding anything to data
+ * If EOF is reached stops reading, and returns true.*/
+bool FileHandler::readNext(VLRegistry& reg) {
+	if(bufferPos<readBuffer.size()){
+		reg=readBuffer[bufferPos];
+		bufferPos++;
+		return true;
+	}else{
+		while(!this->eof() && byteMap[nextRelPos]==0){
+			nextRelPos++;
+		}
+		if(!this->eof()){
+			this->read(readBuffer,nextRelPos);
+			return true;
+		}else{
+			return false;
+		}
+	}
 }
 
 /*pre: relPos is in byteMap and is valid
@@ -112,7 +155,8 @@ void FileHandler::deleteBlock(int relPos) {
 	}
 }
 
-//todo remove this??
+/*pre:valid file opened.
+ * post: returns the current format of the file as csv string*/
 std::string FileHandler::getFormatAsString() {
 	std::stringstream format;
 	for(int i=1; i<=metadata[1]; i++){
@@ -146,6 +190,69 @@ std::string FileHandler::getFormatAsString() {
 	return format.str();
 }
 
+/*pre: valid file opened.
+ * post: creates or overrides outputPath with a csv containing the registries.
+ * Each registry occupies one line, with each field separated by a coma.*/
+void FileHandler::toCsv(std::string outputPath) {
+	std::fstream output(outputPath.c_str(),std::ios_base::out|std::ios::trunc);
+	VLRegistry reg;
+	while(this->readNext(reg)){
+		regToCsv(reg, output);
+		output<<std::endl;
+	}
+}
+
+/*pre: valid file opened. csv has same format as handler
+ * sourcePath is a csv file created by a handler of this same program, or respects its format
+ * post: creates or overrides outputPath with a binary file containing the registries,
+ * sets the metadata accordingly.*/
+void FileHandler::fromCsv(std::string sourcePath) {
+	std::fstream input(sourcePath.c_str(),std::ios_base::in);
+	for(std::string line; std::getline(input,line);){
+		std::replace(line.begin(), line.end(), ',', ' ');
+		std::stringstream ss(line);
+		int id; ss>>id;
+		VLRegistry reg(id,getFormatAsString());
+		std::vector<FieldType> format=getFormatAsTypes();
+		std::vector<FieldType>::iterator it=format.begin();
+		int i=1;
+		for(; it!=format.end(); it++){
+			Field field;
+			field.type=*it;
+			switch(*it){
+			case I1:
+				ss >> field.value.i1;
+				break;
+			case I2:
+				ss >> field.value.i2;
+				break;
+			case I4:
+				ss >> field.value.i4;
+				break;
+			case I8:
+				ss >> field.value.i8;
+				break;
+			case SD:
+			case SL:
+			case D:
+			case DT:
+				ss >> field.s;
+				break;
+			}
+			reg.setField(i,field);
+			i++;
+		}
+		writeNext(reg);
+	}
+}
+
+bool FileHandler::eof() {
+	if((uint)nextRelPos<byteMap.size())
+		return fs.eof();
+	else
+		return true;
+}
+
 /******************************************private*********************************************/
 
 /*attempts to write data into the specified block.
@@ -156,18 +263,15 @@ int FileHandler::writeBin(int relPos,const std::vector<char>& data) {
 
 	long int percentage=data.size()*100;
 	percentage/=blockSizeInBytes();
-	byteMap[relPos]=(char) percentage;
+	byteMap[relPos]=(char) percentage;//something wrong in percentage
 
 	fs.seekg(calculateOffset(relPos), std::ios_base::beg);
 	std::vector<char> block(blockSizeInBytes());//to get 0 filled vector
 	std::copy(data.begin(),data.end(),block.begin());
 	fs.write(&block[0], blockSizeInBytes());
 	rewriteByteMap();
+	nextRelPos=relPos+1;
 	return 0;
-}
-
-bool FileHandler::eof() {
-	return fs.eof();
 }
 
 uint FileHandler::blockSizeInBytes() {
@@ -176,7 +280,6 @@ uint FileHandler::blockSizeInBytes() {
 	blockSizeInBytes *= CHUNK_SIZE;
 	return blockSizeInBytes;
 }
-
 
 void FileHandler::rewriteByteMap() {
 	fs.seekg(METADATA_SIZE,std::ios_base::beg);
@@ -191,19 +294,47 @@ long int FileHandler::calculateOffset(int relPos) {
 
 void FileHandler::setFormat(std::string format) {
 	std::replace(format.begin(), format.end(), ',', ' ');
-	std::stringstream ss("i4 "+format);
+	std::stringstream ss(format);
 	std::string field;
 	while (ss >> field) {
-		char fieldId = fromString(field);//auto cast here
+		char fieldId = typeFromString(field);//auto cast here
 		metadata[1]++;
 		metadata[metadata[1]+1] = fieldId;
 	}
 }
 
 std::vector<FieldType> FileHandler::getFormatAsTypes() {
-	std::vector<FieldType> types(metadata[1]);
+	std::vector<FieldType> types;
 	for(int i=0; i<metadata[1]; i++){
-		types[i]=static_cast<FieldType>(metadata[2+i]);
+		types.push_back(static_cast<FieldType>(metadata[2+i]));
 	}
 	return types;
+}
+
+void FileHandler::regToCsv(VLRegistry &reg, std::fstream& output) {
+	for (int j = 0; j < reg.getNumOfFields(); j++) {
+		Field field = reg.getField(j);
+		switch (field.type) {
+		case I1:
+			output << field.value.i1;
+			break;
+		case I2:
+			output << field.value.i2;
+			break;
+		case I4:
+			output << field.value.i4;
+			break;
+		case I8:
+			output << field.value.i8;
+			break;
+		case SD:
+		case SL:
+		case D:
+		case DT:
+			output << field.s;
+			break;
+		}
+		if (j < reg.getNumOfFields() - 1)
+			output << ',';
+	}
 }

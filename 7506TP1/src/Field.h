@@ -38,5 +38,5 @@ struct Field {
 	FieldType type;
 };
 
-FieldType fromString(const std::string& field);
+FieldType typeFromString(const std::string& field);
 #endif /* FIELD_H_ */

@@ -56,7 +56,7 @@ void VLRSerializer::serializeReg(std::vector<char>& serializedData, const VLRegi
 			break;
 		case SD:
 			cp=field.s.c_str();
-			dataSize=strlen(cp);
+			dataSize=strlen(cp)+1;
 			break;
 		case SL:
 			cp=field.s.c_str();
@@ -75,8 +75,10 @@ void VLRSerializer::serializeReg(std::vector<char>& serializedData, const VLRegi
 			dataSize=DATETIME_SIZE;
 			break;
 		}
+		int oldSize=fieldData.size();
+		fieldData.resize(oldSize+dataSize);
 		for(int j=0; j<dataSize; j++){
-			fieldData.push_back(*cp);
+			fieldData[oldSize+j]=*cp;
 			cp++;
 		}
 		serializedData.insert(serializedData.end(),fieldData.begin(),fieldData.end());

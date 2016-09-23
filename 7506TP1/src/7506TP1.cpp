@@ -6,8 +6,9 @@
 // Description : Hello World in C++, Ansi-style
 //============================================================================
 
+#include "tests.h"
 #include "FileHandler.h"
-#include <iostream>
+#include "VLRegistry.h"
 using namespace std;
 
 #define MODE_PARAM 1
@@ -15,32 +16,14 @@ using namespace std;
 
 
 int main(int argc, char* argv[]) {
-	//test variables
-	string format = "i1,i4,sD,d";
-	const int cantRegAAgregar=1;
 	//todo modes
 	//todo use arguments
-	vector<VLRegistry> block;
-	FileHandler handler("testNew.bin", 1, format);
-	for(int i=1; i<=cantRegAAgregar ; i++){
-		//create reg
-		VLRegistry reg(i,format);
-		//set format
-		Field field;
-		field.value.i1=7;field.type=I1;
-		reg.setField(1,field);
-		field.value.i4=3;field.type=I4;
-		reg.setField(2,field);
-		field.s="AABBCCDD";field.type=SD;
-		reg.setField(3,field);
-		field.s="AABBCCCC";field.type=D;
-		reg.setField(4,field);
-		block.push_back(reg);
-	}
-	if(handler.write(block)<0) cout<<"overflow";
-	block.clear();
-	handler.read(block,0);
-	//Field field=block[0].getField(0);
-	//cout<<field.type<<": "<<field.value.i4;
+	//test variables
+	runTests();
+	FileHandler blockHandler("test.bin");
+	blockHandler.toCsv("testCsv");
+	FileHandler newBlockHandler("tests2.bin",4,"i1,i2,i4,sD,d,dT");
+	newBlockHandler.fromCsv("testCsv");
+	//newBlockHandler.toCsv("test2.csv");
 	return 0;
 }
