@@ -21,8 +21,7 @@ VLRUnserializer::~VLRUnserializer() {}
  * output has same format as unserializer
  * post:takes the serialized registry and turns it into a VLRegistry according to the specified format
  * of the unserializer. dataIt points to last pos read*/
-void VLRUnserializer::unserializeReg(VLRegistry &output,
-		const std::vector<char> &serializedData,dataIt_t &dataIt) {
+void VLRUnserializer::unserializeReg(VLRegistry &output,dataIt_t &dataIt) {
 	//todo exceptions
 	for(uint i=0; i<format.size(); i++){
 		Field field;
@@ -103,6 +102,6 @@ void VLRUnserializer::unserializeBlock(std::vector<VLRegistry>& block,
 	dataIt_t dataIt=serializedData.begin();
 	dataIt++;//avoid num of reg
 	for(int i=0; i<serializedData[0]; i++){
-		unserializeReg(block[i],serializedData,dataIt);
+		unserializeReg(block[i],dataIt);
 	}
 }

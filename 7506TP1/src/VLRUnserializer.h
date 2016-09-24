@@ -23,7 +23,7 @@ class VLRUnserializer {
 public:
 	VLRUnserializer(std::vector<FieldType> &format);
 	virtual ~VLRUnserializer();
-	void unserializeReg(VLRegistry &output,const std::vector<char> &serializedData,dataIt_t &begin);
+	void unserializeReg(VLRegistry &output,dataIt_t &begin);
 	void unserializeBlock(std::vector<VLRegistry> &block, const std::vector<char> &serializedData);
 };
 

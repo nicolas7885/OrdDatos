@@ -36,7 +36,7 @@ public:
 	void deleteBlock(uint relPos);
 	virtual bool eof();
 protected:
-	virtual luint calculateOffset(luint relPos);
+	ulint calculateOffset(ulint relPos);
 	virtual int writeBin(uint relPos, const std::vector<char>& serializedData);
 	virtual void restartBuffersToBeginning();
 private:

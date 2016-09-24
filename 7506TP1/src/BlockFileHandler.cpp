@@ -19,15 +19,17 @@
 #include "VLRUnserializer.h"
 
 #define BLOCK_CHARGE_PERCENTAGE 80
+#define METADATA_BSIZE_POS 0
 
 /*creates file handler for file in path. Reads metadata and byteMap.
  * */
 BlockFileHandler::BlockFileHandler(std::string path)
 :FileHandler(path){
 	restartBuffersToBeginning();
-	bSize=metadata[0];
+	bSize=metadata[METADATA_BSIZE_POS];
 	byteMap.resize(blockSizeInBytes());
 	fs.read(&byteMap[0],(int)blockSizeInBytes());//leo mapa bytes
+	fs.seekp(calculateOffset(0),std::ios_base::beg);
 }
 
 /*pre: path is a valid path, bSize is block size, between 1 and 4, format is valid
@@ -39,7 +41,7 @@ BlockFileHandler::BlockFileHandler(std::string path, uint bSize, std::string for
  bSize(bSize),
  byteMap(blockSizeInBytes()){
 	restartBuffersToBeginning();
-	metadata[0]=bSize;
+	metadata[METADATA_BSIZE_POS]=bSize;
 
 	fs.write(&metadata[0], metadata.size());
 	rewriteByteMap();//initializes byteMap as empty
@@ -173,15 +175,15 @@ bool BlockFileHandler::eof() {
 		return true;
 }
 /**********************************************private *************************************************/
-luint BlockFileHandler::calculateOffset(luint relPos) {
-	luint offset = metadata.size()+ byteMap.size();
+ulint BlockFileHandler::calculateOffset(ulint relPos) {
+	ulint offset = metadata.size()+ byteMap.size();
 	offset += relPos * blockSizeInBytes();
 	return offset;
 }
+
 /*attempts to write data into the specified block.
  * if overflow returns -1,if succesful returns 0*/
 int BlockFileHandler::writeBin(uint relPos,const std::vector<char>& data) {
-	if(!fs)std::cout<<"file broken??"<<std::endl;
 	if(data.size()>blockSizeInBytes())
 		return -1;
 

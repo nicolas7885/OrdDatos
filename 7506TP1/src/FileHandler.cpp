@@ -44,8 +44,8 @@ FileHandler::~FileHandler() {
  * post: returns the current format of the file as csv string*/
 std::string FileHandler::getFormatAsString() {
 	std::stringstream format;
-	for(int i=1; i<=metadata[1]; i++){
-		switch(metadata[1+i]){
+	for(int i=1; i<=metadata[FORMAT_SIZE_POS]; i++){
+		switch(metadata[FORMAT_SIZE_POS+i]){
 		case I1:
 			format<<"i1";
 			break;
@@ -71,7 +71,7 @@ std::string FileHandler::getFormatAsString() {
 			format<<"dT";
 			break;
 		}
-		if(i<metadata[1])format<<",";
+		if(i<metadata[FORMAT_SIZE_POS])format<<",";
 	}
 	return format.str();
 }
@@ -147,14 +147,14 @@ void FileHandler::setFormat(std::string format) {
 	std::string field;
 	while (ss >> field) {
 		char fieldId = typeFromString(field);//auto cast here
-		metadata[1]++;
-		metadata[metadata[1]+1] = fieldId;
+		metadata[FORMAT_SIZE_POS]++;
+		metadata[metadata[FORMAT_SIZE_POS]+1] = fieldId;
 	}
 }
 
 std::vector<FieldType> FileHandler::getFormatAsTypes() {
 	std::vector<FieldType> types;
-	for(int i=0; i<metadata[1]; i++){
+	for(int i=0; i<metadata[FORMAT_SIZE_POS]; i++){
 		types.push_back(static_cast<FieldType>(metadata[2+i]));
 	}
 	return types;

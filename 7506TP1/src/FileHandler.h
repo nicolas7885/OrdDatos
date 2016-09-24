@@ -17,9 +17,10 @@
 
 #define CHUNK_SIZE 512
 #define METADATA_SIZE CHUNK_SIZE
+#define FORMAT_SIZE_POS 1
 
 typedef unsigned int uint;
-typedef long unsigned int luint;
+typedef unsigned long int ulint;
 typedef std::vector<VLRegistry>::iterator blockIt_t;
 
 class FileHandler {
@@ -44,7 +45,6 @@ public:
 protected:
 	void setFormat(std::string format);
 	std::vector<FieldType> getFormatAsTypes();
-	virtual luint calculateOffset(luint relPos)=0;
 	virtual int writeBin(uint relPos, const std::vector<char>& serializedData)=0;
 	void regToCsv(VLRegistry &reg, std::fstream& output);
 	virtual void restartBuffersToBeginning()=0;
