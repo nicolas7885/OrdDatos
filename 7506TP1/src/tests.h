@@ -19,9 +19,9 @@ using namespace std;
 void runTests() {
 	//test variables
 	string format = "i1,i2,i4,sD,d,dT";
-	const int cantRegAAgregar = 2;
+	const int cantRegAAgregar = 100;
 	vector<VLRegistry> block;
-	FileHandler handler("test1.bin", 2, format);
+	FileHandler handler("test1.bin", 4, format);
 	for (int i = 1; i <= cantRegAAgregar; i++) {
 		//create reg
 		VLRegistry reg(i, format);

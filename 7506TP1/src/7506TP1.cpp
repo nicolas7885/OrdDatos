@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
 	runTests();
 	FileHandler blockHandler("test1.bin");
 	blockHandler.toCsv("testCsv");
-	FileHandler newBlockHandler("test2.bin",4,"i1,i2,i4,sD,d,dT");
+	FileHandler newBlockHandler("test2.bin",1,"i1,i2,i4,sD,d,dT");
 	newBlockHandler.fromCsv("testCsv");
 	newBlockHandler.toCsv("test2Csv");
 	return 0;

@@ -118,22 +118,24 @@ void FileHandler::read(std::vector<VLRegistry>& data, uint relPos) {
 int FileHandler::writeNext(VLRegistry & reg){
 	bool notWritten=true;
 	uint relPos=currRelPos;
-//	while(byteMap[currRelPos]>BLOCK_CHARGE_PERCENTAGE){
-//		currRelPos++;
-//		if(currRelPos>=byteMap.size())
-//			return -1;
-//	}//avoid almost full blocks
 	while(notWritten && !this->eof()){
 		if(currRelPos>0){
 			relPos=currRelPos-1;//try last block used
 		}else{
 			relPos=currRelPos;//if first then try there
 		}
+		while(byteMap[relPos]>BLOCK_CHARGE_PERCENTAGE){
+			relPos++;
+			if(relPos>=byteMap.size())
+				return -1;
+		}//avoid almost full blocks
 		std::vector<VLRegistry> block;
 		read(block,relPos);
 		block.push_back(reg);
 		if(write(block,relPos)==0)
 			notWritten=false;
+		else
+			std::cout<<"overflow"<<std::endl;
 	}
 	if(notWritten)
 		return -1;
