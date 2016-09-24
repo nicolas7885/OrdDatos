@@ -95,7 +95,7 @@ void VLRUnserializer::reziseBlock(int newSize, std::vector<VLRegistry>& block) {
 	block.resize(newSize, newReg);
 }
 
-/*pre: serializedData has the format indicated for unserializer
+/*pre: serializedData has the format indicated for unserializer.
  * post: fills block with the unserialized registries*/
 void VLRUnserializer::unserializeBlock(std::vector<VLRegistry>& block,
 		const std::vector<char>& serializedData) {

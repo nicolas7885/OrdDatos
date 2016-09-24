@@ -34,7 +34,7 @@ struct Field {
 		int i4;
 		long int i8;
 	} value;
-	std::string s;//I know its ugly but no boost allowed
+	std::string s="";//I know its ugly but no boost allowed
 	FieldType type;
 };
 

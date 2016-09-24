@@ -10,19 +10,18 @@
 
 #include "FileHandler.h"
 #include "VLRegistry.h"
+#include "Field.h"
 #include <iostream>
+#include <string>
 
 using namespace std;
-
+//test de agregar cosas
 void runTests() {
-	//todo modes
-	//todo use arguments
 	//test variables
 	string format = "i1,i2,i4,sD,d,dT";
-	const int cantRegAAgregar = 5;
-	//todo test open
+	const int cantRegAAgregar = 2;
 	vector<VLRegistry> block;
-	FileHandler handler("test.bin", 1, format);
+	FileHandler handler("test1.bin", 2, format);
 	for (int i = 1; i <= cantRegAAgregar; i++) {
 		//create reg
 		VLRegistry reg(i, format);
@@ -48,8 +47,7 @@ void runTests() {
 		reg.setField(6, field);
 		block.push_back(reg);
 	}
-	if (handler.write(block) < 0)
-		cout << "overflow";
+	handler.write(block);
 }
 
 

@@ -13,10 +13,7 @@
 #include <vector>
 
 #include "VLRegistry.h"
-#include "VLRUnserializer.h"
 #include "Field.h"
-
-class VLRegistry;
 
 #define INVALID_BSIZE -1
 #define UNABLE_TO_OPEN -2
@@ -29,7 +26,7 @@ class FileHandler {
 	std::vector<char> metadata;
 	std::vector<char> byteMap;
 	std::fstream fs;
-	int nextRelPos;//rel pos
+	uint currRelPos;//rel pos
 	std::vector<VLRegistry> readBuffer;
 	uint bufferPos;
 
@@ -38,12 +35,12 @@ public:
 	FileHandler(std::string path, uint bSize, std::string format);
 	virtual ~FileHandler();
 	int write(const std::vector<VLRegistry> &data);
-	int write(const std::vector<VLRegistry> &data,int relPos);
+	int write(const std::vector<VLRegistry> &data,uint relPos);
 	void read(std::vector<VLRegistry> &data);
-	void read(std::vector<VLRegistry> &data,int relPos);
+	void read(std::vector<VLRegistry> &data,uint relPos);
 	int writeNext(VLRegistry & reg);
 	bool readNext(VLRegistry &reg);
-	void deleteBlock(int relPos);
+	void deleteBlock(uint relPos);
 	bool eof();
 	std::string getFormatAsString();
 	void toCsv(std::string outputPath);
@@ -53,9 +50,10 @@ private:
 	void setFormat(std::string format);
 	std::vector<FieldType> getFormatAsTypes();
 	void rewriteByteMap();
-	long int calculateOffset(int relPos);
-	int writeBin(int relPos, const std::vector<char>& serializedData);
+	long unsigned int calculateOffset(uint relPos);
+	int writeBin(uint relPos, const std::vector<char>& serializedData);
 	void regToCsv(VLRegistry &reg, std::fstream& output);
+	void restartBuffersToBeginning();
 };
 
 #endif /* FILEHANDLER_H_ */
