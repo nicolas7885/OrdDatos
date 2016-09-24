@@ -15,45 +15,39 @@
 #include "VLRegistry.h"
 #include "Field.h"
 
-#define INVALID_BSIZE -1
-#define UNABLE_TO_OPEN -2
+#define CHUNK_SIZE 512
+#define METADATA_SIZE CHUNK_SIZE
 
 typedef unsigned int uint;
+typedef long unsigned int luint;
 typedef std::vector<VLRegistry>::iterator blockIt_t;
 
 class FileHandler {
-	char bSize;
+protected:
 	std::vector<char> metadata;
-	std::vector<char> byteMap;
 	std::fstream fs;
 	uint currRelPos;//rel pos
-	std::vector<VLRegistry> readBuffer;
-	uint bufferPos;
 
 public:
 	FileHandler(std::string path);
-	FileHandler(std::string path, uint bSize, std::string format);
+	FileHandler(std::string path, std::string format);
 	virtual ~FileHandler();
-	int write(const std::vector<VLRegistry> &data);
-	int write(const std::vector<VLRegistry> &data,uint relPos);
-	void read(std::vector<VLRegistry> &data);
-	void read(std::vector<VLRegistry> &data,uint relPos);
-	int writeNext(VLRegistry & reg);
-	bool readNext(VLRegistry &reg);
-	void deleteBlock(uint relPos);
-	bool eof();
+	/*writes reg in next possible position*/
+	virtual int writeNext(VLRegistry & reg)=0;
+	/*reads the next valid registry*/
+	virtual bool readNext(VLRegistry &reg)=0;
+	virtual bool eof();
 	std::string getFormatAsString();
 	void toCsv(std::string outputPath);
 	void fromCsv(std::string sourcePath);
-private:
-	uint blockSizeInBytes();
+
+protected:
 	void setFormat(std::string format);
 	std::vector<FieldType> getFormatAsTypes();
-	void rewriteByteMap();
-	long unsigned int calculateOffset(uint relPos);
-	int writeBin(uint relPos, const std::vector<char>& serializedData);
+	virtual luint calculateOffset(luint relPos)=0;
+	virtual int writeBin(uint relPos, const std::vector<char>& serializedData)=0;
 	void regToCsv(VLRegistry &reg, std::fstream& output);
-	void restartBuffersToBeginning();
+	virtual void restartBuffersToBeginning()=0;
 };
 
 #endif /* FILEHANDLER_H_ */

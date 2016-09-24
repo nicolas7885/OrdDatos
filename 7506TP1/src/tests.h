@@ -8,7 +8,7 @@
 #ifndef SRC_TESTS_H_
 #define SRC_TESTS_H_
 
-#include "FileHandler.h"
+#include "BlockFileHandler.h"
 #include "VLRegistry.h"
 #include "Field.h"
 #include <iostream>
@@ -21,7 +21,7 @@ void runTests() {
 	string format = "i1,i2,i4,sD,d,dT";
 	const int cantRegAAgregar = 100;
 	vector<VLRegistry> block;
-	FileHandler handler("test1.bin", 4, format);
+	BlockFileHandler handler("test1.bin", 4, format);
 	for (int i = 1; i <= cantRegAAgregar; i++) {
 		//create reg
 		VLRegistry reg(i, format);
