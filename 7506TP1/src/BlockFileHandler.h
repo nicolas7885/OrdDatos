@@ -20,6 +20,7 @@
 class BlockFileHandler : public FileHandler{
 	char bSize;
 	std::vector<char> byteMap;
+	ulint currRelPos;//rel pos
 	std::vector<VLRegistry> readBuffer;
 	uint bufferPos;
 
@@ -31,7 +32,7 @@ public:
 	int write(const std::vector<VLRegistry> &data,uint relPos);
 	void read(std::vector<VLRegistry> &data);
 	void read(std::vector<VLRegistry> &data,uint relPos);
-	virtual int writeNext(VLRegistry & reg);
+	virtual ulint writeNext(const VLRegistry & reg);
 	virtual bool readNext(VLRegistry &reg);
 	void deleteBlock(uint relPos);
 	virtual bool eof();

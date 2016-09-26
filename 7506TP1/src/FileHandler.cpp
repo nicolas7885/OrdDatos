@@ -18,8 +18,7 @@
  * */
 FileHandler::FileHandler(std::string path)
 :metadata(METADATA_SIZE),
-fs(path),
-currRelPos(0){
+fs(path){
 	if(!fs || !fs.is_open())std::cout<<"file openeing error"<<std::endl;
 	fs.read(&metadata[0],METADATA_SIZE);//leo metadata
 }
@@ -131,7 +130,7 @@ void FileHandler::fromCsv(std::string sourcePath) {
 			reg.setField(i,field);
 			i++;
 		}
-		writeNext(reg);
+		this->writeNext(reg);
 	}
 	input.close();
 }

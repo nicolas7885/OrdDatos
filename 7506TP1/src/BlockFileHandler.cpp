@@ -24,12 +24,13 @@
 /*creates file handler for file in path. Reads metadata and byteMap.
  * */
 BlockFileHandler::BlockFileHandler(std::string path)
-:FileHandler(path){
+:FileHandler(path),
+ currRelPos(0){
 	restartBuffersToBeginning();
 	bSize=metadata[METADATA_BSIZE_POS];
 	byteMap.resize(blockSizeInBytes());
 	fs.read(&byteMap[0],(int)blockSizeInBytes());//leo mapa bytes
-	fs.seekp(calculateOffset(0),std::ios_base::beg);
+	fs.seekp(calculateOffset(0));
 }
 
 /*pre: path is a valid path, bSize is block size, between 1 and 4, format is valid
@@ -39,13 +40,14 @@ BlockFileHandler::BlockFileHandler(std::string path)
 BlockFileHandler::BlockFileHandler(std::string path, uint bSize, std::string format)
 :FileHandler(path,format),
  bSize(bSize),
+ currRelPos(0),
  byteMap(blockSizeInBytes()){
 	restartBuffersToBeginning();
 	metadata[METADATA_BSIZE_POS]=bSize;
 
 	fs.write(&metadata[0], metadata.size());
 	rewriteByteMap();//initializes byteMap as empty
-	fs.seekp(calculateOffset(0),std::ios_base::beg);
+	fs.seekp(calculateOffset(0));
 }
 
 BlockFileHandler::~BlockFileHandler(){
@@ -99,7 +101,7 @@ void BlockFileHandler::read(std::vector<VLRegistry>& data) {
  * post:reads the block at the position given*/
 void BlockFileHandler::read(std::vector<VLRegistry>& data, uint relPos) {
 	if(relPos<byteMap.size() && byteMap[relPos]!=0){
-		fs.seekp(calculateOffset(relPos),std::ios_base::beg);
+		fs.seekp(calculateOffset(relPos));
 		currRelPos=relPos;
 		this->read(data);
 	}
@@ -109,7 +111,7 @@ void BlockFileHandler::read(std::vector<VLRegistry>& data, uint relPos) {
  * Does nothing and returns -1 if EOF is reached before writing.
  * If write is succesful returns num of block where it ended in.
  * Does not attempt to write into almost full blocks(BLOCK_CHARGE_PERCENTAGE)*/
-int BlockFileHandler::writeNext(VLRegistry & reg){
+ulint BlockFileHandler::writeNext(const VLRegistry & reg){
 	bool notWritten=true;
 	uint relPos=currRelPos;
 	while(notWritten && !this->eof()){
@@ -138,7 +140,7 @@ int BlockFileHandler::writeNext(VLRegistry & reg){
 }
 
 /*attempts to read the next non empty block and put the information into data.
- * Does nothing and returns false if EOF is reached before adding anything to data
+ * Does nothing and returns false if EOF is reached before reading into reg
  * If EOF is reached stops reading, and returns true.*/
 bool BlockFileHandler::readNext(VLRegistry& reg) {
 	if(bufferPos<readBuffer.size()){
@@ -192,7 +194,7 @@ int BlockFileHandler::writeBin(uint relPos,const std::vector<char>& data) {
 	if(percentage==0) percentage=1;//if its almost empty still mark as occupied
 	byteMap[relPos]=(char) percentage;
 
-	fs.seekg(calculateOffset(relPos), std::ios_base::beg);
+	fs.seekg(calculateOffset(relPos));
 	std::vector<char> block(blockSizeInBytes());//to get 0 filled vector
 	std::copy(data.begin(),data.end(),block.begin());
 	fs.write(&block[0], blockSizeInBytes());
@@ -210,7 +212,7 @@ uint BlockFileHandler::blockSizeInBytes() {
 }
 
 void BlockFileHandler::rewriteByteMap() {
-	fs.seekg(METADATA_SIZE,std::ios_base::beg);
+	fs.seekg(METADATA_SIZE);
 	fs.write(&byteMap[0], blockSizeInBytes());
 }
 

@@ -27,15 +27,17 @@ class FileHandler {
 protected:
 	std::vector<char> metadata;
 	std::fstream fs;
-	uint currRelPos;//rel pos
-
 public:
 	FileHandler(std::string path);
 	FileHandler(std::string path, std::string format);
 	virtual ~FileHandler();
-	/*writes reg in next possible position*/
-	virtual int writeNext(VLRegistry & reg)=0;
-	/*reads the next valid registry*/
+	/*writes reg in next possible position
+	 *Does nothing and returns -1 if EOF is reached before writing.
+	 * If write is succesful returns num of block where it ended in.*/
+	virtual ulint writeNext(const VLRegistry & reg)=0;
+	/*reads the next valid registry*
+	 * Does nothing and returns false if EOF is reached before reading into reg
+	 * If EOF is reached stops reading, and returns true.*/
 	virtual bool readNext(VLRegistry &reg)=0;
 	virtual bool eof();
 	std::string getFormatAsString();
@@ -45,7 +47,6 @@ public:
 protected:
 	void setFormat(std::string format);
 	std::vector<FieldType> getFormatAsTypes();
-	virtual int writeBin(uint relPos, const std::vector<char>& serializedData)=0;
 	void regToCsv(VLRegistry &reg, std::fstream& output);
 	virtual void restartBuffersToBeginning()=0;
 };
