@@ -20,7 +20,7 @@ struct PointerToFree{
 
 
 class VLRFileHandler: public FileHandler {
-	ulint firstFreeRelPos;
+	ulint firstFreePtr;
 
 public:
 	VLRFileHandler(std::string path);
@@ -29,6 +29,7 @@ public:
 	bool read(ulint relPos, VLRegistry &reg);
 	virtual ulint writeNext(const VLRegistry & reg);
 	virtual bool readNext(VLRegistry &reg);
+	void deleteReg(ulint relPos);
 
 protected:
 	virtual ulint calculateOffset(ulint relPos);
@@ -41,6 +42,9 @@ private:
 	void read(VLRegistry& reg);
 	void writePointerToFree(ulint freeSpacePos, ulint freeSpaceSize,ulint nextFreePointer);
 	PointerToFree readPointerToFree(ulint relPos);
+	void updateMetadata();
+	void updateLinkedList(const PointerToFree& prevFreePointer,const ulint nextPointer);
+	ulint findPosToWriteAndUpdateList(std::vector<char>& serializedData);
 };
 
 #endif /* SRC_VLRFILEHANDLER_H_ */

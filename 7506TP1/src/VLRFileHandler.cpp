@@ -15,24 +15,20 @@
 
 #define DATA_TYPE_REG 1
 #define DATA_TYPE_POINTER_TO_FREE 2
-#define POINTER_TO_FREE_SIZE 16
+#define FIRST_FREE_POINTER_POS 256+FORMAT_SIZE_POS
 
 VLRFileHandler::VLRFileHandler(std::string path)
 :FileHandler(path){
-	char* cp=&metadata[FORMAT_SIZE_POS+metadata[FORMAT_SIZE_POS]];
-	firstFreeRelPos=*reinterpret_cast<long unsigned int*>(cp);
-	fs.seekp(calculateOffset(0));
+	char* cp=&metadata[FIRST_FREE_POINTER_POS];
+	firstFreePtr=*reinterpret_cast<long unsigned int*>(cp);
+	restartBuffersToBeginning();
 }
 
 VLRFileHandler::VLRFileHandler(std::string path, std::string format)
 :FileHandler(path,format),
- firstFreeRelPos(0){
-	char* cp= reinterpret_cast<char*>(&firstFreeRelPos);
-	for(uint i=0; i<sizeof(firstFreeRelPos); i++){
-		metadata[i+FORMAT_SIZE_POS+metadata[FORMAT_SIZE_POS]]=*(cp+i);
-	}
+ firstFreePtr(0){
 	fs.write(&metadata[0], metadata.size());
-	fs.seekp(calculateOffset(0));
+	restartBuffersToBeginning();
 }
 
 VLRFileHandler::~VLRFileHandler() {
@@ -55,6 +51,40 @@ bool VLRFileHandler::read(ulint relPos, VLRegistry& reg) {
 	}
 }
 
+void VLRFileHandler::deleteReg(ulint relPos) {
+	PointerToFree prevFreePointer={0,0,firstFreePtr};
+	ulint nextFreePointerPos=0;
+	ulint searchPos=firstFreePtr;
+	while (!this->eof() && !nextFreePointerPos && searchPos) {
+		PointerToFree currFreePointer = readPointerToFree(searchPos);
+		if (prevFreePointer.pointerToNext>relPos) {
+			nextFreePointerPos=prevFreePointer.pointerToNext;
+		} else {
+			searchPos = currFreePointer.pointerToNext;//if relPos==0 write in eof
+			prevFreePointer = currFreePointer;
+		}
+	}
+	updateLinkedList(prevFreePointer,relPos);
+	fs.seekp(calculateOffset(relPos));
+	readType();
+	//if(readType()!=DATA_TYPE_REG) //error
+	ulint size=readSize();
+	writePointerToFree(relPos,size,nextFreePointerPos);
+}
+
+/*read the next free Pointer at currPos.
+ * If succesful returns the struture*/
+PointerToFree VLRFileHandler::readPointerToFree(ulint relPos) {
+	PointerToFree newPointer;
+	newPointer.relPos=relPos;
+	fs.seekp(calculateOffset(relPos));
+	readType();
+	//todo check type
+	newPointer.size=readSize();
+	fs.read((char*)&newPointer.pointerToNext,sizeof(newPointer.pointerToNext));
+	return newPointer;
+}
+
 void VLRFileHandler::writePointerToFree(ulint freeSpacePos, ulint freeSpaceSize,ulint nextFreePointer) {
 	std::vector<char> freeSpacePointer(freeSpaceSize);
 	char* cp=reinterpret_cast<char*>(nextFreePointer);
@@ -64,71 +94,81 @@ void VLRFileHandler::writePointerToFree(ulint freeSpacePos, ulint freeSpaceSize,
 	this->writeBin(freeSpacePos, freeSpacePointer, DATA_TYPE_POINTER_TO_FREE);
 }
 
-/*read the next free Pointer at currPos.
- * If succesful returns the struture*/
-PointerToFree VLRFileHandler::readPointerToFree(ulint relPos) {
-	PointerToFree newPointer;
-	newPointer.relPos=relPos;
-	fs.seekp(relPos);
-	readType();
-	//todo check type
-	newPointer.size=readSize();
-	fs.read((char*)&newPointer.pointerToNext,sizeof(newPointer.pointerToNext));
-	return newPointer;
+void VLRFileHandler::updateMetadata() {
+	//update metadata
+	char* cp = reinterpret_cast<char*>(&firstFreePtr);
+	for (uint i = 0; i < sizeof(firstFreePtr); i++) {
+		metadata[i + FIRST_FREE_POINTER_POS] = *(cp + i);
+	}
+	fs.write(&metadata[0], metadata.size());
+}
+
+void VLRFileHandler::updateLinkedList(const PointerToFree& prevFreePointer,
+		const ulint nextPointer) {
+	if (prevFreePointer.pointerToNext == firstFreePtr) {
+		firstFreePtr = nextPointer;
+		updateMetadata();
+	} else {
+		writePointerToFree(prevFreePointer.relPos, prevFreePointer.size,
+				nextPointer);
+	}
+}
+
+/*follows linked list of free spaces, until it finds a space big enough.
+ * If found,updates the linked list accordingly to new insertion, and returns position of insertion.
+ * If not found in list, returns the end of the file, to write there*/
+ulint VLRFileHandler::findPosToWriteAndUpdateList(std::vector<char>& serializedData) {
+	if (firstFreePtr == 0) {
+		return std::ios_base::end; //write at end of file
+	}
+	ulint relPos = firstFreePtr;
+	PointerToFree prevFreePointer={0,0,firstFreePtr};
+	while (!this->eof()) {
+		PointerToFree currFreePointer = readPointerToFree(relPos);
+		ulint freeSize = currFreePointer.size;
+		if (freeSize > serializedData.size()) {
+			ulint freeSpacePointerOverhead = sizeof(char)
+										+ sizeof(regSize_t);
+			ulint freeSpacePointerSize = freeSpacePointerOverhead
+					+ sizeof(currFreePointer.pointerToNext);
+			ulint difference = freeSize - serializedData.size();
+			if (difference >= freeSpacePointerSize) {
+				//update free size after reg
+				ulint freeSpacePos = relPos + freeSpacePointerOverhead
+						+ serializedData.size();
+				writePointerToFree(freeSpacePos,
+						difference - freeSpacePointerOverhead,
+						currFreePointer.pointerToNext);
+				updateLinkedList(prevFreePointer, currFreePointer.relPos);
+			} else {
+				/*include internal fragmentation as part of reg
+				 *to avoid loss of space(shouldnt influence data)*/
+				serializedData.resize(freeSize);
+				updateLinkedList(prevFreePointer,
+						currFreePointer.pointerToNext);
+			}
+			return relPos;//exit
+		} else {
+			//go to next pointer
+			relPos = currFreePointer.pointerToNext;
+			if (relPos == 0) {
+				return std::ios_base::end;
+			}
+			prevFreePointer = currFreePointer;
+		}
+	}
+	return std::ios_base::end;
 }
 
 /*writes reg in next possible position. If its written
  * If write is succesful returns relPos where it ended in. */
 ulint VLRFileHandler::writeNext(const VLRegistry& reg) {
-	VLRSerializer serializer;
 	std::vector<char> serializedData;
-	serializer.serializeReg(serializedData,reg);
-	ulint relPos;
-	if(firstFreeRelPos==0){
-		relPos=std::ios_base::end;//write at end of file
-	}else{
-		bool spaceFound=false;
-		relPos=firstFreeRelPos;
-		PointerToFree prevFreePointer;
-		while(!spaceFound && !this->eof()){
-			PointerToFree currFreePointer=readPointerToFree(relPos);
-			ulint freeSize=currFreePointer.size;
-			if(freeSize>serializedData.size()){
-				spaceFound=true;//to exit
-				ulint freeSpacePointerOverhead=sizeof(char)+sizeof(regSize_t);
-				ulint freeSpacePointerSize=freeSpacePointerOverhead+
-						sizeof(currFreePointer.pointerToNext);
-				ulint difference=freeSize-serializedData.size();
-				if(difference>=freeSpacePointerSize){
-					//update free size after reg
-					ulint freeSpacePos=relPos+freeSpacePointerOverhead+serializedData.size();
-					writePointerToFree(freeSpacePos,
-							difference-freeSpacePointerOverhead,
-							currFreePointer.pointerToNext);
-					//update linked list(prev)
-					writePointerToFree(prevFreePointer.relPos,
-							prevFreePointer.size,
-							currFreePointer.relPos);
-				}else{
-					/*include internal fragmentation as part of reg
-					 *to avoid loss of space(shouldnt influence data)*/
-					serializedData.resize(freeSize);
-					//update linked list (prev)
-					writePointerToFree(prevFreePointer.relPos,
-							prevFreePointer.size,
-							currFreePointer.pointerToNext);
-				}
-			}else{
-				//go to next pointer
-				relPos=currFreePointer.pointerToNext;
-				if(relPos ==0){
-					relPos=std::ios_base::end;
-					spaceFound=true;
-				}
-				prevFreePointer=currFreePointer;
-			}
-		}
+	{
+		VLRSerializer serializer;
+		serializer.serializeReg(serializedData,reg);
 	}
+	ulint relPos = findPosToWriteAndUpdateList(serializedData);
 	this->writeBin(relPos,serializedData,DATA_TYPE_REG);
 	return relPos;
 }
@@ -158,7 +198,7 @@ bool VLRFileHandler::readNext(VLRegistry& reg) {
 }
 
 ulint VLRFileHandler::calculateOffset(ulint relPos) {
-	return relPos+512;
+	return relPos+152;
 }
 
 /*writes data type, serializedData size, and serializedData  into relPos.
