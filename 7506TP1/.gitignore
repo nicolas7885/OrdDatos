@@ -3,3 +3,8 @@ CMakeFiles/
 CMakeCache.txt
 cmake_install.cmake
 *~
+/Makefile
+/test1.bin
+/test2.bin
+/test2Csv
+/testCsv
