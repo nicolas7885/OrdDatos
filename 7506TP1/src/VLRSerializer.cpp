@@ -23,7 +23,7 @@ void VLRSerializer::serializeReg(std::vector<char>& serializedData, const VLRegi
 	//todo error in case theres too many
 	//uncomment this if num of fields is variable
 	//serializedData.push_back(numOfFields);
-	//todo its backwards!!!!!
+	//todo its backwards!!!!! but it works?!
 	for(int i=0; i<numOfFields; i++){
 		Field field=reg.getField(i);
 		std::vector<char> fieldData;

@@ -8,3 +8,5 @@ cmake_install.cmake
 /test2.bin
 /test2Csv
 /testCsv
+/testVLR.bin
+/testVLRCsv

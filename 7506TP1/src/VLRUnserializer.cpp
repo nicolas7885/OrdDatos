@@ -22,6 +22,7 @@ VLRUnserializer::~VLRUnserializer() {}
  * post:takes the serialized registry and turns it into a VLRegistry according to the specified format
  * of the unserializer. dataIt points to last pos read*/
 void VLRUnserializer::unserializeReg(VLRegistry &output,dataIt_t &dataIt) {
+	initializeRegAsEmpty(output);
 	//todo exceptions
 	for(uint i=0; i<format.size(); i++){
 		Field field;
@@ -32,27 +33,30 @@ void VLRUnserializer::unserializeReg(VLRegistry &output,dataIt_t &dataIt) {
 			field.value.i1=*dataIt;
 			dataIt++;
 			break;
-		case I2:
+		case I2:{
 			cp=&(*dataIt);//todo check if it works
 			dataIt+=sizeof(short int);
 			short int const* sip;
 			sip=reinterpret_cast<short int const*>(cp);
 			field.value.i2=*sip;
 			break;
-		case I4:
+		}
+		case I4:{
 			cp=&(*dataIt);//todo check if it works
 			dataIt+=sizeof(int);
 			int const* ip;
 			ip=reinterpret_cast<int const*>(cp);
 			field.value.i4=*ip;
 			break;
-		case I8:
+		}
+		case I8:{
 			cp=&(*dataIt);//todo check if it works
 			dataIt+=sizeof(long int);
 			long int const* lip;
 			lip=reinterpret_cast<long int const*>(cp);
 			field.value.i8=*lip;
 			break;
+		}
 		case SD:
 			while(*dataIt != 0){
 				field.s+=*dataIt;
@@ -60,37 +64,43 @@ void VLRUnserializer::unserializeReg(VLRegistry &output,dataIt_t &dataIt) {
 			}
 			dataIt++;//avoid null character
 			break;
-		case SL:
+		case SL:{
 			char length;
 			length=*dataIt;
 			dataIt++;
-			for(int i=1; i<=length; i++){
-				field.s+=*dataIt;
-				dataIt++;
-			}
-			break;
-		case D:
-			for(int i=1; i<=DATE_SIZE; i++){
-				field.s+=*dataIt;
-				dataIt++;
-			}
-			break;
-		case DT:
-			for(int i=1; i<=DATETIME_SIZE; i++){
+			for(int j=1; j<=length; j++){
 				field.s+=*dataIt;
 				dataIt++;
 			}
 			break;
 		}
+		case D:{
+			for(int j=1; j<=DATE_SIZE; j++){
+				field.s+=*dataIt;
+				dataIt++;
+			}
+			break;
+		}
+		case DT:{
+			for(int j=1; j<=DATETIME_SIZE; j++){
+				field.s+=*dataIt;
+				dataIt++;
+			}
+			break;
+		}
+		}
 		output.setField(i,field);
+	}
+}
+
+void VLRUnserializer::initializeRegAsEmpty(VLRegistry& newReg) {
+	for (uint j = newReg.getNumOfFields(); j < format.size(); j++) {
+		newReg.addEmptyField(format[j]);
 	}
 }
 
 void VLRUnserializer::reziseBlock(int newSize, std::vector<VLRegistry>& block) {
 	VLRegistry newReg;
-	for (uint j = 0; j < format.size(); j++) {
-		newReg.addEmptyField(format[j]);
-	}
 	block.resize(newSize, newReg);
 }
 

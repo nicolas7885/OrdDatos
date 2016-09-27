@@ -19,7 +19,7 @@ using namespace std;
 void runTests() {
 	//test variables
 	string format = "i1,i2,i4,sD,d,dT";
-	const int cantRegAAgregar = 100;
+	const int cantRegAAgregar = 9;
 	vector<VLRegistry> block;
 	BlockFileHandler handler("test1.bin", 4, format);
 	for (int i = 1; i <= cantRegAAgregar; i++) {
@@ -27,7 +27,7 @@ void runTests() {
 		VLRegistry reg(i, format);
 		//set format
 		Field field;
-		field.value.i1 = 127;
+		field.value.i1 = 1;
 		field.type = I1;
 		reg.setField(1, field);
 		field.value.i2 = 512;

@@ -43,12 +43,12 @@ public:
 	std::string getFormatAsString();
 	void toCsv(std::string outputPath);
 	void fromCsv(std::string sourcePath);
+	virtual void restartBuffersToBeginning()=0;
 
 protected:
 	void setFormat(std::string format);
 	std::vector<FieldType> getFormatAsTypes();
 	void regToCsv(VLRegistry &reg, std::fstream& output);
-	virtual void restartBuffersToBeginning()=0;
 };
 
 #endif /* FILEHANDLER_H_ */

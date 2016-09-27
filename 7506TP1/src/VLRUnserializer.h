@@ -19,6 +19,7 @@ class VLRUnserializer {
 	std::vector<FieldType> format;
 
 	void reziseBlock(int newSize, std::vector<VLRegistry>& block);
+	void initializeRegAsEmpty(VLRegistry &newReg);
 
 public:
 	VLRUnserializer(std::vector<FieldType> &format);

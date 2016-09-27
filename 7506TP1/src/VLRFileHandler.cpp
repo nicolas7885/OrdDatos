@@ -51,6 +51,8 @@ bool VLRFileHandler::read(ulint relPos, VLRegistry& reg) {
 	}
 }
 
+/* pre: relPos was obtained from a write or read operation
+ * post:deletes the reg found at relPos. */
 void VLRFileHandler::deleteReg(ulint relPos) {
 	PointerToFree prevFreePointer={0,0,firstFreePtr};
 	ulint nextFreePointerPos=0;
@@ -118,8 +120,9 @@ void VLRFileHandler::updateLinkedList(const PointerToFree& prevFreePointer,
  * If found,updates the linked list accordingly to new insertion, and returns position of insertion.
  * If not found in list, returns the end of the file, to write there*/
 ulint VLRFileHandler::findPosToWriteAndUpdateList(std::vector<char>& serializedData) {
+	const ulint endOfFileOff = std::ios_base::end;
 	if (firstFreePtr == 0) {
-		return std::ios_base::end; //write at end of file
+		return endOfFileOff; //write at end of file
 	}
 	ulint relPos = firstFreePtr;
 	PointerToFree prevFreePointer={0,0,firstFreePtr};
@@ -128,7 +131,7 @@ ulint VLRFileHandler::findPosToWriteAndUpdateList(std::vector<char>& serializedD
 		ulint freeSize = currFreePointer.size;
 		if (freeSize > serializedData.size()) {
 			ulint freeSpacePointerOverhead = sizeof(char)
-										+ sizeof(regSize_t);
+												+ sizeof(regSize_t);
 			ulint freeSpacePointerSize = freeSpacePointerOverhead
 					+ sizeof(currFreePointer.pointerToNext);
 			ulint difference = freeSize - serializedData.size();
@@ -152,12 +155,12 @@ ulint VLRFileHandler::findPosToWriteAndUpdateList(std::vector<char>& serializedD
 			//go to next pointer
 			relPos = currFreePointer.pointerToNext;
 			if (relPos == 0) {
-				return std::ios_base::end;
+				return endOfFileOff;
 			}
 			prevFreePointer = currFreePointer;
 		}
 	}
-	return std::ios_base::end;
+	return endOfFileOff;
 }
 
 /*writes reg in next possible position. If its written
@@ -169,6 +172,11 @@ ulint VLRFileHandler::writeNext(const VLRegistry& reg) {
 		serializer.serializeReg(serializedData,reg);
 	}
 	ulint relPos = findPosToWriteAndUpdateList(serializedData);
+	if(relPos==std::ios_base::end){
+		fs.seekg (0, fs.end);
+		relPos = fs.tellg();
+		relPos-=512;//to work with the usual calculate offset
+	}
 	this->writeBin(relPos,serializedData,DATA_TYPE_REG);
 	return relPos;
 }
@@ -198,7 +206,7 @@ bool VLRFileHandler::readNext(VLRegistry& reg) {
 }
 
 ulint VLRFileHandler::calculateOffset(ulint relPos) {
-	return relPos+152;
+	return relPos+512;
 }
 
 /*writes data type, serializedData size, and serializedData  into relPos.
@@ -210,7 +218,7 @@ int VLRFileHandler::writeBin(uint off,
 	fs.write(&dataType, sizeof(dataType));//data type
 	ulint size= serializedData.size();
 	fs.write((char*)&size, sizeof(size));//size
-	fs.write(&serializedData[sizeof(char)], serializedData.size());//data
+	fs.write(&serializedData[0], serializedData.size());//data
 	if(!fs){
 		std::cout<<"error writing"<<std::endl;
 		return -1;

@@ -40,8 +40,8 @@ BlockFileHandler::BlockFileHandler(std::string path)
 BlockFileHandler::BlockFileHandler(std::string path, uint bSize, std::string format)
 :FileHandler(path,format),
  bSize(bSize),
- currRelPos(0),
- byteMap(blockSizeInBytes()){
+ byteMap(blockSizeInBytes()),
+ currRelPos(0){
 	restartBuffersToBeginning();
 	metadata[METADATA_BSIZE_POS]=bSize;
 
