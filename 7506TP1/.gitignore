@@ -10,3 +10,17 @@ cmake_install.cmake
 /testCsv
 /testVLR.bin
 /testVLRCsv
+/test1B.bin
+/test1BCsv
+/test2B.bin
+/test2BCsv
+/test3BCsv
+/test4VLR.bin
+/test4VLRCsv
+/test5VLRCsv
+/test6VLRCsv
+/test7Csv
+/test8Csv
+/test9Csv
+/test3VLR.bin
+/test4B.bin

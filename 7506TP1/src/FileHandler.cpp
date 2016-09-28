@@ -77,7 +77,8 @@ std::string FileHandler::getFormatAsString() {
 
 /*pre: valid file opened.
  * post: creates or overrides outputPath with a csv containing the registries.
- * Each registry occupies one line, with each field separated by a coma.*/
+ * Each registry occupies one line, with each field separated by a coma.
+ * At the end of the method restars file stream*/
 void FileHandler::toCsv(std::string outputPath) {
 	std::fstream output(outputPath.c_str(),std::ios_base::out|std::ios::trunc);
 	this->restartBuffersToBeginning();
@@ -86,12 +87,13 @@ void FileHandler::toCsv(std::string outputPath) {
 		regToCsv(reg, output);
 	}
 	output.close();
+	this->restartBuffersToBeginning();
 }
 
 /*pre: valid file opened. csv has same format as handler
  * sourcePath is a csv file created by a handler of this same program, or respects its format
  * post: creates or overrides outputPath with a binary file containing the registries,
- * sets the metadata accordingly.*/
+ * sets the metadata accordingly.At the end of the method restars file stream*/
 void FileHandler::fromCsv(std::string sourcePath) {
 	std::fstream input(sourcePath.c_str(),std::ios_base::in);//open csv
 	this->restartBuffersToBeginning();
@@ -133,6 +135,7 @@ void FileHandler::fromCsv(std::string sourcePath) {
 		this->writeNext(reg);
 	}
 	input.close();
+	this->restartBuffersToBeginning();
 }
 
 bool FileHandler::eof() {

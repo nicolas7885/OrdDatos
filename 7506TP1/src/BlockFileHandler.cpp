@@ -161,10 +161,10 @@ bool BlockFileHandler::readNext(VLRegistry& reg) {
 	}
 }
 
-/*pre: relPos is in byteMap and is valid
+/*pre: relPos is in byteMap and is valid.note: first pos is 0
  * post: the block is replaced by 0. byteMap corrected*/
 void BlockFileHandler::deleteBlock(uint relPos) {
-	if(byteMap[relPos]){
+	if(relPos<byteMap.size() && byteMap[relPos]){
 		std::vector<char> emptyData;
 		writeBin(relPos,emptyData);
 	}
@@ -190,8 +190,8 @@ int BlockFileHandler::writeBin(uint relPos,const std::vector<char>& data) {
 		return -1;
 
 	long int percentage=data.size()*100;
-	percentage/=blockSizeInBytes();//something wrong in percentage
-	if(percentage==0) percentage=1;//if its almost empty still mark as occupied
+	percentage/=blockSizeInBytes();//todo fix something wrong in percentage
+	if(percentage==0 && data.size()!=0) percentage=1;//if its almost empty still mark as occupied
 	byteMap[relPos]=(char) percentage;
 
 	fs.seekg(calculateOffset(relPos));

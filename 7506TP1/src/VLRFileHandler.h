@@ -13,7 +13,7 @@
 typedef unsigned long int regSize_t;
 
 struct PointerToFree{
-	ulint relPos;
+	ulint pos;
 	ulint size;
 	ulint pointerToNext;
 };
@@ -33,7 +33,6 @@ public:
 
 protected:
 	virtual ulint calculateOffset(ulint relPos);
-	virtual int writeBin(uint off, const std::vector<char>& serializedData,const char dataType);
 	virtual void restartBuffersToBeginning();
 
 private:
@@ -45,6 +44,8 @@ private:
 	void updateMetadata();
 	void updateLinkedList(const PointerToFree& prevFreePointer,const ulint nextPointer);
 	ulint findPosToWriteAndUpdateList(std::vector<char>& serializedData);
+
+	virtual int writeBin(uint pos, const std::vector<char>& serializedData,const char dataType);
 };
 
 #endif /* SRC_VLRFILEHANDLER_H_ */
