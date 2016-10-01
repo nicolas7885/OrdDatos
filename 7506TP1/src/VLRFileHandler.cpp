@@ -27,6 +27,7 @@ VLRFileHandler::VLRFileHandler(std::string path)
 VLRFileHandler::VLRFileHandler(std::string path, std::string format)
 :FileHandler(path,format),
  firstFreePtr(0){
+	metadata[0]=100;
 	fs.write(&metadata[0], metadata.size());
 	restartBuffersToBeginning();
 }

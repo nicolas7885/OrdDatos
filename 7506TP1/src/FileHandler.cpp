@@ -19,7 +19,7 @@
 FileHandler::FileHandler(std::string path)
 :metadata(METADATA_SIZE),
 fs(path){
-	if(!fs || !fs.is_open())std::cout<<"file openeing error"<<std::endl;
+	if(!fs || !fs.is_open())std::cout<<"file opening error"<<std::endl;
 	fs.read(&metadata[0],METADATA_SIZE);//leo metadata
 }
 
