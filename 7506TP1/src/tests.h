@@ -65,6 +65,13 @@ void createBinBlockFile(string path) {
 	}
 }
 
+string obtainCombinedFormat(BlockFileHandler& blockHandler1,
+		VLRFileHandler& vlrHandler) {
+	string combinationFormat = blockHandler1.getFormatAsString() + ",i4,"
+			+ vlrHandler.getFormatAsString();
+	return combinationFormat;
+}
+
 /*test: secuential integration test. if it returns -1 error,
  *check files for bugs even if 0*
  *srry about lazy test framework*/
@@ -88,9 +95,8 @@ void runTests() {
 	BlockFileHandler blockHandler1(binBlockFile1);
 	blockHandler1.toCsv(basicFile);
 
-	//2 read block file(smaller blocks also) from csv
+	//2 read block file(smaller blocks also) from csv, delete block & output
 	BlockFileHandler newBlockHandler(binBlockFile2, 0, FORMAT);
-	//load delete and output
 	newBlockHandler.fromCsv(basicFile);
 	newBlockHandler.deleteBlock(1);
 	newBlockHandler.toCsv(ReadAndDeleteFile);
@@ -129,9 +135,9 @@ void runTests() {
 		unionHandler.toCsv(unionFile);
 	}
 	{//8 do basic selection and output
-		string binUnionFile="test4B.bin";
+		string binSelectionFile="test4B.bin";
 		string selectionFile="test8Csv";
-		BlockFileHandler selectionHandler(binUnionFile, 0, FORMAT);
+		BlockFileHandler selectionHandler(binSelectionFile, 0, FORMAT);
 		Field compareValue;
 		compareValue.type=I4;
 		compareValue.value.i4=10;
@@ -139,13 +145,21 @@ void runTests() {
 		proccessor.selectionOperator(vlrHandler,selectionHandler,condition);
 		selectionHandler.toCsv(selectionFile);
 	}
-	{//9 do proyection and output
-		string binUnionFile="test4B.bin";
+	{//9 do projection and output
+		string binProjectionFile="test4B.bin";
 		string projectionFile="test9Csv";
-		BlockFileHandler projectionHandler(binUnionFile, 0, "i1,d,sD");
+		BlockFileHandler projectionHandler(binProjectionFile, 0, "i1,d,sD");
 		string selectionFields="0,1,5,4";
 		proccessor.projectionOperator(vlrHandler,projectionHandler, selectionFields);
 		projectionHandler.toCsv(projectionFile);
+	}
+	{//10 do product and output
+		string binProductFile="test4B.bin";
+		string productFile="test10Csv";
+		string combinationFormat = obtainCombinedFormat(blockHandler1,vlrHandler);
+		VLRFileHandler productHandler(binProductFile,combinationFormat);
+		proccessor.productOperator(blockHandler1,vlrHandler, productHandler);
+		productHandler.toCsv(productFile);
 	}
 }
 

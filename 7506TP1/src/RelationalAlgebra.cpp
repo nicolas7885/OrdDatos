@@ -50,7 +50,7 @@ void RelationalAlgebra::projectionOperator(FileHandler& input,
 	while(input.readNext(oldReg)){
 		VLRegistry newReg;
 		std::stringstream ss(selectionFields);
-		for(int fieldNumber, numberOfFields=0;ss >> fieldNumber;numberOfFields++){
+		for(uint fieldNumber, numberOfFields=0;ss >> fieldNumber;numberOfFields++){
 			if(oldReg.getNumOfFields()>fieldNumber){
 				newReg.addEmptyField();
 				Field f=oldReg.getField(fieldNumber);
@@ -63,15 +63,31 @@ void RelationalAlgebra::projectionOperator(FileHandler& input,
 	}
 }
 
+/* pre: input1, input2, output are valid open files.
+ * Output can write the combination of any two registries.
+ * (i.e. if block file, sum of registries size not bigger than block size)
+ * post:for each registry in input 1, reads every registry in input2,
+ *  and writes the "union" between both registries and writes it into output*/
 void RelationalAlgebra::productOperator(FileHandler& input1,
 		FileHandler& input2, FileHandler& output) {
-	input1.restartBuffersToBeginning();
 	VLRegistry reg1;
+	input1.restartBuffersToBeginning();
 	while(input1.readNext(reg1)){
 		VLRegistry reg2;
+		input2.restartBuffersToBeginning();
 		while(input2.readNext(reg2)){
-			//todo do something here
-			//todo write to output something
+			VLRegistry combination;
+			for (uint i = 0; i < reg1.getNumOfFields(); i++) {
+				Field field=reg1.getField(i);
+				combination.addEmptyField(field.type);
+				combination.setField(i,field);
+			}
+			for (uint i = 0, reg1Size=reg1.getNumOfFields(); i < reg2.getNumOfFields(); i++) {
+				Field field=reg2.getField(i);
+				combination.addEmptyField(field.type);
+				combination.setField(i+reg1Size,field);
+			}
+			output.writeNext(combination);
 		}
 	}
 }

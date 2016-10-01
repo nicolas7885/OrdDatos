@@ -11,6 +11,7 @@
 #include <sstream>
 #include "Field.h"
 
+/*creates a registry with specified format, and id at field 0*/
 VLRegistry::VLRegistry(int id, std::string format){
 	addId(id);
 	std::replace(format.begin(), format.end(), ',', ' ');
@@ -21,20 +22,26 @@ VLRegistry::VLRegistry(int id, std::string format){
 	}
 }
 
+/*creates an empty registry, with no fields*/
 VLRegistry::VLRegistry() {}
 
 VLRegistry::~VLRegistry() {}
 
+/* pre: there are at least id+1 fields
+ * post:gets the field at id position*/
 Field VLRegistry::getField(int id) const{
 	//todo check bounds
 	return fields[id];
 }
 
+/* pre: there are at least id+1 fields
+ * post: sets the field at id position as field&*/
 void VLRegistry::setField(int id, const Field& field) {
 	//todo bounds check
 	fields[id]=field;
 }
 
+/*adds a specified field with indicated type at the end of the registry.*/
 void VLRegistry::addEmptyField(FieldType type) {
 	Field field;
 	field.type=type;
@@ -69,7 +76,7 @@ void VLRegistry::addId(int id) {
 	fields.push_back(field);
 }
 
-int VLRegistry::getNumOfFields() const{
+uint VLRegistry::getNumOfFields() const{
 	return fields.size();
 }
 

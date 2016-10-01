@@ -163,7 +163,7 @@ std::vector<FieldType> FileHandler::getFormatAsTypes() {
 }
 
 void FileHandler::regToCsv(VLRegistry &reg, std::fstream& output) {
-	for (int j = 0; j < reg.getNumOfFields(); j++) {
+	for (uint j = 0; j < reg.getNumOfFields(); j++) {
 		Field field = reg.getField(j);
 		switch (field.type) {
 		case I1:

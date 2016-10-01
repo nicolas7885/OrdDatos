@@ -20,7 +20,7 @@ enum CmpMode{
 struct condition_t{
 	CmpMode mode;
 	Field value;
-	int pos;
+	uint pos;
 };
 
 class RelationalAlgebra {

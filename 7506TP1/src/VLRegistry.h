@@ -21,7 +21,7 @@ public:
 	virtual ~VLRegistry();
 	Field getField(int id) const;
 	void setField(int id,const Field& field);
-	int getNumOfFields() const;
+	uint getNumOfFields() const;
 	void addEmptyField(FieldType type = I8);
 private:
 	void addId(int id);
