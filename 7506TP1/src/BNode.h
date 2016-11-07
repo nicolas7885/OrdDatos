@@ -9,7 +9,8 @@
 #define SRC_BNODE_H_
 
 #include <vector>
-#include <fstream>
+
+class BPlusTree;
 
 //NODE_SIZE must be multiple of sizeof(int) and a power of 2
 #define NODE_SIZE 512
@@ -27,24 +28,27 @@ struct pair{
 
 class TreeNode{
 protected:
+	BPlusTree* tree;
 	uint height;
+	uint relPos;
 	uint load;
-	std::fstream& fs;
-	uint pos;
-
 public:
-	TreeNode(uint height, std::fstream& fs, uint pos);
+	TreeNode(BPlusTree* tree, uint height, uint pos);
 	virtual ~TreeNode();
 	uint getHeight();
-	/*inserts an element into the node,returns true if split needed*/
-	virtual bool insert(pair element)=0;
+	/*inserts an element into the node*/
+	virtual void insert(pair element)=0;
 	/*writes node data into corresponding file pos*/
 	virtual void write()=0;
 	/*returns true if found and writes value to result.
 	 * if not, returns false and doesnt change result */
 	virtual bool find(int key, uint&result)=0;
-
-	static TreeNode* read(std::fstream& fs,uint relPos);
+	/*returns true if node should be split*/
+	virtual bool shouldSplit()=0;
+	/*splits node, creating new node, and adding key and child reference to parent.*/
+	virtual void split(InnerNode* parent)=0;
+	/*reads new node from tree*/
+	static TreeNode* read(BPlusTree* tree,uint relPos);
 };
 
 /********************************************************************************/
@@ -53,13 +57,16 @@ class InnerNode:public TreeNode{
 	std::vector<uint> children;
 
 public:
-	InnerNode(int height, std::fstream& fs, uint pos, std::vector<int> &keys,std::vector<uint> &children);
+	InnerNode(BPlusTree* tree, uint height,uint oldRoot);
+	InnerNode(BPlusTree* tree, uint height, uint pos, std::vector<int> &keys,std::vector<uint> &children);
 	virtual ~InnerNode();
 	int findKeyInsertPos(int key);
-	bool insert(pair element);
-	bool insert(int key,uint child);
+	void insert(pair element);
+	void insert(int key,uint child);
 	void write();
 	bool find(int key, uint&result);
+	bool shouldSplit();
+	void split(InnerNode* parent);
 };
 
 /********************************************************************************/
@@ -68,13 +75,15 @@ class LeafNode:public TreeNode{
 	uint next;
 
 public:
-	LeafNode(std::fstream& fs, uint pos);
-	LeafNode(std::fstream& fs, uint pos,std::vector<pair>& elements, uint next);
+	LeafNode(BPlusTree* tree);
+	LeafNode(BPlusTree* tree, uint pos,std::vector<pair>& elements, uint next);
 	virtual ~LeafNode();
-	bool insert(pair element);
+	void insert(pair element);
 	void changeNext(uint next);
 	void write();
 	bool find(int key, uint&result);
+	bool shouldSplit();
+	void split(InnerNode* parent);
 
 private:
 	int findElementInsertPos(int elementKey);

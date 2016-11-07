@@ -9,11 +9,11 @@
 typedef std::vector<int>::iterator intIt_t;
 typedef std::vector<uint>::iterator uintIt_t;
 
-TreeNode::TreeNode(uint height, std::fstream& fs, uint pos)
-:height(height),
- load(0),
- fs(fs),
- pos(pos)
+TreeNode::TreeNode(BPlusTree* tree,uint height, uint pos)
+:tree(tree),
+ height(height),
+ relPos(pos),
+ load(0)
 {}
 
 TreeNode::~TreeNode(){}
@@ -22,11 +22,10 @@ uint TreeNode::getHeight(){
 	return height;
 }
 
-TreeNode* TreeNode::read(std::fstream& fs,uint relPos) {
+TreeNode* TreeNode::read(BPlusTree* tree,uint relPos) {
 	uint pos= relPos*NODE_SIZE;
 	std::vector<int> data(NODE_SIZE/sizeof(int));
-	fs.seekg(pos);
-	fs.read((char*)&data[0],NODE_SIZE);
+	tree->read(data,relPos);
 	intIt_t dataIt=data.begin()+2;
 	int load=data[1];
 	TreeNode* node;
@@ -36,7 +35,7 @@ TreeNode* TreeNode::read(std::fstream& fs,uint relPos) {
 			pair p={(uint)*(dataIt+1),*dataIt};
 			elements.push_back(p);
 		}
-		node=new LeafNode(fs,relPos,elements,*dataIt);
+		node=new LeafNode(tree,relPos,elements,*dataIt);
 	}else{
 		std::vector<int> keys(load);
 		for(int i=0; i<load; i++,dataIt++){
@@ -46,19 +45,25 @@ TreeNode* TreeNode::read(std::fstream& fs,uint relPos) {
 		for(int i=0; i<load+1; i++,dataIt++){
 			children.push_back(*dataIt);
 		}
-		node= new InnerNode(data[0],fs,relPos,keys,children);
+		node= new InnerNode(data[0],tree,relPos,keys,children);
 	}
 	return node;
 }
 /********************************************************************************/
+/*creates new InnerNode as root of a tree*/
+InnerNode::InnerNode(BPlusTree* tree, uint height, uint oldRoot)
+:TreeNode(tree,height,0){
+	children.push_back(oldRoot);
+}
 
-/*creates node with certain height, set of keys and children*/
-InnerNode::InnerNode(int height, std::fstream& fs, uint pos,
+/*creates node with certain height, set of keys, and children. writes node in tree*/
+InnerNode::InnerNode(BPlusTree* tree, uint height,uint pos,
 		std::vector<int> &keys,std::vector<uint> &children)
-:TreeNode(height,fs,pos),
+:TreeNode(tree,height,pos),
  keys(keys),
  children(children){
 	load=this->keys.size();
+	this->write();
 }
 
 //todo chain delete
@@ -72,22 +77,21 @@ int InnerNode::findKeyInsertPos(int key){
 	}
 	return keys.size();
 }
-/*inserts pair key/value into leaf in child nodes. Splits nodes if neccessary.
- * returns true if node must be split.*/
-bool InnerNode::insert(pair element){
+/*inserts pair key/value into leaf in child nodes. Splits nodes if neccessary.*/
+void InnerNode::insert(pair element){
 	uint insertPos=findKeyInsertPos(element.key);
-	TreeNode* insertionNode=TreeNode::read(fs,children[insertPos]);
-	if(insertionNode->insert(element)){
-		//node split needed
-		//todo split node
-		return true;
-	}else{
-		return false;
+	TreeNode* insertionNode=TreeNode::read(tree,children[insertPos]);
+	insertionNode->insert(element);
+	if(insertionNode->shouldSplit()){
+		insertionNode->split(this);
+		if(!this->shouldSplit())
+			this->write();//if child node split then this node changed
 	}
+	delete insertionNode;
 }
 
-/*inserts key and child into node. returns true if it must be split*/
-bool InnerNode::insert(int key,uint child){
+/*inserts key and child into node.*/
+void InnerNode::insert(int key,uint child){
 	uint insertPos=findKeyInsertPos(key);
 	if (insertPos==keys.size()){
 		keys.push_back(key);
@@ -97,15 +101,9 @@ bool InnerNode::insert(int key,uint child){
 		children.insert(children.begin()+insertPos+1,child);
 	}
 	load++;
-	if(keys.size()==N){
-		//split needed
-		return true;
-	}else{
-		return false;
-	}
 }
 
-/*writes in file the data of the node*/
+/*writes in file the data of the node(complete rewrite)*/
 void InnerNode::write() {
 	std::vector<int> data;
 	data.push_back(height);
@@ -117,45 +115,73 @@ void InnerNode::write() {
 		data.push_back(*it);
 	}
 	data.resize(NODE_SIZE/sizeof(int));//should be same or bigger
-	fs.write((char*)&data[0],NODE_SIZE);
+	tree->write(data,relPos);
 }
 
 /*returns true if found and writes value to result.
  * if not, returns false and doesnt change result */
 bool InnerNode::find(int key,uint& result) {
-	//todo hidrate children and find in them
-	return 0;
+	uint nextPos=findKeyInsertPos(key);
+	TreeNode* nextNode=TreeNode::read(tree,children[nextPos]);
+	bool found=nextNode->find(key,result);
+	delete nextNode;
+	return found;
+}
+
+bool InnerNode::shouldSplit() {
+	if(keys.size()==N){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/*splits node, creating new node, and adding key and child reference to parent.*/
+void InnerNode::split(InnerNode* parent) {
+	if(relPos==0)
+		relPos=tree->getNextPos();
+	int const halfSize=keys.size()/2;
+	std::vector<int> brotherKeys(keys.begin()+halfSize+1,keys.end());//skip middle key
+	int upKey=keys[halfSize];
+	keys.resize(halfSize);
+	std::vector<int> brotherChildren(children.begin()+halfSize+1,children.end());
+	children.resize(halfSize+1);
+	uint brotherPos=tree->getNextPos();
+	InnerNode brother(height,tree,brotherPos,brotherKeys,brotherChildren);
+	this->write();
+	parent->insert(upKey,brotherPos);
 }
 
 /********************************************************************************/
 /*creates empty leaf node(for root)*/
-LeafNode::LeafNode(std::fstream& fs, uint pos)
-:TreeNode(0,fs,pos),
+LeafNode::LeafNode(BPlusTree* tree)
+:TreeNode(tree,0,0),
  next(0){}
 
-/*creates leaf wtih set of elements*/
-LeafNode::LeafNode(std::fstream& fs, uint pos, std::vector<pair>& elements, uint next)
-:TreeNode(0,fs,pos),
+/*creates leaf wtih set of elements. writes itself into tree*/
+LeafNode::LeafNode(BPlusTree* tree, uint pos, std::vector<pair>& elements, uint next)
+:TreeNode(tree,0,pos),
  elements(elements),
- next(next){}
+ next(next){
+	this->write();
+}
 
 LeafNode::~LeafNode(){}
 
-/*inserts element in node. Returns true if it needs to be split*/
-bool LeafNode::insert(pair element){
+/*inserts element in node. writes node in tree*/
+void LeafNode::insert(pair element){
 	uint insertPos=findElementInsertPos(element.key);
-	if(insertPos==elements.size()){
-		elements.push_back(element);
+	if(insertPos!=0 && elements[insertPos-1].key==element.key){
+		//key alredy in tree, replace value
+		elements[insertPos-1].value=element.value;
 	}else{
-		elements.insert(elements.begin()+insertPos,element);
-	}
-	load++;
-
-	if(elements.size()==M){
-		//split needed
-		return true;
-	}else{
-		return false;
+		if(insertPos==elements.size()){
+			elements.push_back(element);
+		}else{
+			elements.insert(elements.begin()+insertPos,element);
+		}
+		load++;
+		this->write();
 	}
 }
 
@@ -164,7 +190,7 @@ void LeafNode::changeNext(uint next){
 	this->next=next;
 }
 
-/*writes in file the data of the node*/
+/*writes in tree the data of the node(complete rewrite)*/
 void LeafNode::write() {
 	std::vector<int> data;
 	data.push_back(height);
@@ -175,7 +201,7 @@ void LeafNode::write() {
 	}
 	data.push_back(next);
 	data.resize(NODE_SIZE/sizeof(int));//should be same or bigger
-	fs.write((char*)&data[0],NODE_SIZE);
+	tree->write(data,relPos);
 }
 
 /*returns true if found and writes value to result.
@@ -190,6 +216,30 @@ bool LeafNode::find(int key, uint&result){
 	return false;
 }
 
+/*returns true if node should be split*/
+bool LeafNode::shouldSplit() {
+	if(elements.size()==M){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/*splits node, creating new node, and adding key and child reference to parent.
+ * If node was root, changes its relPos to next one available*/
+void LeafNode::split(InnerNode* parent) {
+	if(relPos==0)
+		relPos=tree->getNextPos();
+	std::size_t const halfSize=elements.size()/2;
+	std::vector<pair> brotherElements(elements.begin()+halfSize,elements.end());
+	elements.resize(halfSize);
+	uint brotherPos=tree->getNextPos();
+	LeafNode brother(tree,brotherPos,brotherElements,next);
+	next=brotherPos;
+	this->write();
+	parent->insert(elements[halfSize-1].key,brotherPos);
+}
+
 int LeafNode::findElementInsertPos(int elementKey){
 	if(elements.size()==0) return 0;
 	for(uint i=0; i<elements.size(); i++){
@@ -197,5 +247,3 @@ int LeafNode::findElementInsertPos(int elementKey){
 	}
 	return elements.size();
 }
-
-

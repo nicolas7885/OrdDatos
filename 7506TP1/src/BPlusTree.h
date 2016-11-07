@@ -11,6 +11,7 @@
 #include "BNode.h"
 #include <string>
 #include <fstream>
+#include <vector>
 
 typedef unsigned int uint;
 
@@ -18,6 +19,7 @@ class BPlusTree {
 private:
 	TreeNode* root;
 	std::fstream file;
+	uint last;
 
 public:
 	//overrides previous index at file
@@ -25,6 +27,9 @@ public:
 	virtual ~BPlusTree();
 	void insert(pair element);
 	bool find(int key,uint& result);
+	void write(std::vector<int>& nodeData, uint relPos);
+	void read(std::vector<int>& nodeData, uint relPos);
+	uint getNextPos();
 
 private:
 	bool checkFileExistance(std::string fileName);
