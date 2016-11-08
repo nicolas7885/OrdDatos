@@ -25,7 +25,7 @@ public:
 	//overrides previous index at file
 	BPlusTree(std::string fileName);
 	virtual ~BPlusTree();
-	void insert(pair element);
+	void insert(pair_t element);
 	bool find(int key,uint& result);
 	void write(std::vector<int>& nodeData, uint relPos);
 	void read(std::vector<int>& nodeData, uint relPos);

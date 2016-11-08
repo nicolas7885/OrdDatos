@@ -11,17 +11,18 @@
 #include <vector>
 
 class BPlusTree;
+class InnerNode;
 
 //NODE_SIZE must be multiple of sizeof(int) and a power of 2
 #define NODE_SIZE 512
 #define N (NODE_SIZE-(2+1)*sizeof(int))/(2*sizeof(int))
-#define M (NODE_SIZE-3*sizeof(int))/sizeof(unsigned int)
+#define M (NODE_SIZE-3*sizeof(int))/(sizeof(int)+sizeof(unsigned int))
 
 /*implementacion de arbol para unsigned int como valor e int como indice.
  * Maneja overflows, pero no underflows(no borra elementos)*/
 typedef unsigned int uint;
 
-struct pair{
+struct pair_t{
 	uint value;
 	int key;
 };
@@ -37,7 +38,7 @@ public:
 	virtual ~TreeNode();
 	uint getHeight();
 	/*inserts an element into the node*/
-	virtual void insert(pair element)=0;
+	virtual void insert(pair_t element)=0;
 	/*writes node data into corresponding file pos*/
 	virtual void write()=0;
 	/*returns true if found and writes value to result.
@@ -61,7 +62,7 @@ public:
 	InnerNode(BPlusTree* tree, uint height, uint pos, std::vector<int> &keys,std::vector<uint> &children);
 	virtual ~InnerNode();
 	int findKeyInsertPos(int key);
-	void insert(pair element);
+	void insert(pair_t element);
 	void insert(int key,uint child);
 	void write();
 	bool find(int key, uint&result);
@@ -71,14 +72,14 @@ public:
 
 /********************************************************************************/
 class LeafNode:public TreeNode{
-	std::vector<pair> elements;
+	std::vector<pair_t> elements;
 	uint next;
 
 public:
 	LeafNode(BPlusTree* tree);
-	LeafNode(BPlusTree* tree, uint pos,std::vector<pair>& elements, uint next);
+	LeafNode(BPlusTree* tree, uint pos,std::vector<pair_t>& elements, uint next);
 	virtual ~LeafNode();
-	void insert(pair element);
+	void insert(pair_t element);
 	void changeNext(uint next);
 	void write();
 	bool find(int key, uint&result);

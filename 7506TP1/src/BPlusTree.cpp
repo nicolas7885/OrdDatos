@@ -6,22 +6,26 @@
  */
 
 #include "BPlusTree.h"
+#include <iostream>
 
 //overrides previous index at file
 BPlusTree::BPlusTree(std::string fileName)
-:file(fileName,std::ios_base::in | std::ios_base::out | std::ios_base::binary),
+:file(fileName,std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc),
  last(0){
-	//todo be able to read existing index
+	if(!file) {
+		std::cout<<"error creating tree file"<<std::endl;
+	}
 	root=new LeafNode(this);
+	//todo be able to read existing index
 }
 
 BPlusTree::~BPlusTree(){
-	//todo save root into file if modified
 	//todo save last pos
 	delete root;
+	file.close();
 }
 
-void BPlusTree::insert(pair element){
+void BPlusTree::insert(pair_t element){
 	root->insert(element);
 	if(root->shouldSplit()){
 		InnerNode* newRoot= new InnerNode(this,root->getHeight()+1,last+1);
