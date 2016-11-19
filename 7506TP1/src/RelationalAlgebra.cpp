@@ -115,27 +115,35 @@ void RelationalAlgebra::selectionOperator(FileHandler& input, FileHandler& outpu
 }
 
 #include "BPlusTree.h"
-/*pre: input 1 and 2 opened and valid, have compatible format with output. Output opened and valid
+
+void RelationalAlgebra::buildIndex(FileHandler& input2,BPlusTree& bTree) {
+	input2.restartBuffersToBeginning();
+	uint regPos=input2.tellg();
+	VLRegistry reg;
+	while (input2.readNext(reg)) {
+		Field f = reg.getField(0);
+		pair_t p = { regPos, f.value.i4 };
+		bTree.insert(p);
+		regPos=input2.tellg();
+	}
+}
+
+/*pre: input 1 and 2 opened and valid, have compatible format with output.
+ * Input2 must have unique id's for the index. Else 2nd reg with same id replaces 1st.
  * post: Puts into output all the reg of input1 that are not in input2. Equality determined by id.*/
 void RelationalAlgebra::differenceOperator(FileHandler& input1,
 		FileHandler& input2, FileHandler& output) {
 	/*todo difference
 	 * idea: build a primary, exhaustive, index*/
 	BPlusTree bTree("tempIndex.bin");
-	input2.restartBuffersToBeginning();
-	VLRegistry reg;
-	//build index
-	while(input2.readNext(reg)){
-		Field f=reg.getField(0);
-		pair_t p={input2.tellg(),f.value.i4};
-		bTree.insert(p);
-	}
+	buildIndex(input2,bTree);
 	//check no equal reg in dif for each
 	input1.restartBuffersToBeginning();
+	VLRegistry reg;
 	while(input1.readNext(reg)){
+		bool shouldInclude=true;
 		Field f=reg.getField(0);
 		uint relPos;
-		bool shouldInclude=true;
 		if(bTree.find(f.value.i4,relPos)){
 			VLRegistry reg2;
 			if(input2.get(relPos,f.value.i4,reg2) && reg==reg2)

@@ -72,6 +72,15 @@ string obtainCombinedFormat(BlockFileHandler& blockHandler1,
 	return combinationFormat;
 }
 
+void doMockSelection(RelationalAlgebra& proccessor, VLRFileHandler& vlrHandler,
+		BlockFileHandler& selectionHandler) {
+	Field compareValue;
+	compareValue.type = I4;
+	compareValue.value.i4 = 10;
+	condition_t condition = { LOWER, compareValue, 0 };
+	proccessor.selectionOperator(vlrHandler, selectionHandler, condition);
+}
+
 /*test: secuential integration test. if it returns -1 error,
  *check files for bugs even if 0*
  *srry about lazy test framework*/
@@ -135,7 +144,9 @@ void runTests() {
 	VLRegistry reg2(127, FORMAT);
 	fillRegistry(reg2);
 	vlrHandler.writeNext(reg2);
-	vlrHandler.writeNext(reg2);
+	VLRegistry reg3(98, FORMAT);
+	fillRegistry(reg3);
+	vlrHandler.writeNext(reg3);
 	vlrHandler.toCsv(ReadAndDeleteAndPutNewFileVlr);
 
 	RelationalAlgebra proccessor;
@@ -150,14 +161,10 @@ void runTests() {
 	}
 	{//8 do basic selection and output
 		//out: reg from output 6(test) lower than compareValue
-		string binSelectionFileName="test4B.bin";
 		string selectionFileName="test8Csv";
-		BlockFileHandler selectionHandler(binSelectionFileName, 0, FORMAT);
-		Field compareValue;
-		compareValue.type=I4;
-		compareValue.value.i4=10;
-		condition_t condition={LOWER,compareValue,0};
-		proccessor.selectionOperator(vlrHandler,selectionHandler,condition);
+		string binSelectionFileName="testSel.bin";
+		BlockFileHandler selectionHandler(binSelectionFileName, 1, FORMAT);
+		doMockSelection(proccessor, vlrHandler, selectionHandler);
 		selectionHandler.toCsv(selectionFileName);
 	}
 	{//9 do projection and output
@@ -178,14 +185,15 @@ void runTests() {
 		proccessor.productOperator(blockHandler1,vlrHandler, productHandler);
 		productHandler.toCsv(productFileName);
 	}
-//	{//11 do difference and output
-//		string binDifferenceFileName="test4B.bin";
-//		string differenceFileName="test11Csv";
-//		string combinationFormat = obtainCombinedFormat(blockHandler1,vlrHandler);
-//		VLRFileHandler differenceHandler(binDifferenceFileName,combinationFormat);
-//		proccessor.differenceOperator(blockHandler1,vlrHandler, differenceHandler);
-//		differenceHandler.toCsv(differenceFileName);
-//	}
+	{//11 do difference and output
+		string binSelectionFileName="testSel.bin";
+		BlockFileHandler selectionHandler(binSelectionFileName);
+		string binDifferenceFileName="test4B.bin";
+		string differenceFileName="test11Csv";
+		BlockFileHandler differenceHandler(binDifferenceFileName,0, FORMAT);
+		proccessor.differenceOperator(blockHandler1,selectionHandler, differenceHandler);
+		differenceHandler.toCsv(differenceFileName);
+	}
 }
 
 

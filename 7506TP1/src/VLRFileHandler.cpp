@@ -240,8 +240,10 @@ ulint VLRFileHandler::calculateOffset(ulint relPos) {
 }
 
 bool VLRFileHandler::get(uint relPos, int id, VLRegistry& result) {
-	this->read(relPos,result);
-	if(result.getField(0).value.i4==id){
+	VLRegistry temp;
+	this->read(relPos,temp);
+	if(temp.getField(0).value.i4==id){
+		result=temp;
 		return true;
 	}else{
 		return false;
@@ -270,6 +272,7 @@ int VLRFileHandler::writeBin(uint pos,
 void VLRFileHandler::restartBuffersToBeginning() {
 	fs.clear();
 	fs.seekg(calculateOffset(0));
+	lastRelPos=0;
 //	fs.seekp(calculateOffset(0));//todo check
 }
 

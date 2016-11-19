@@ -8,8 +8,14 @@
 #ifndef SRC_RELATIONALALGEBRA_H_
 #define SRC_RELATIONALALGEBRA_H_
 
-#include "FileHandler.h"
+#include <sys/types.h>
+#include <string>
+
+#include "BPlusTree.h"
 #include "Field.h"
+#include "FileHandler.h"
+
+class VLRegistry;
 
 struct condition_t{
 	CmpMode mode;
@@ -29,8 +35,7 @@ public:
 	void differenceOperator(FileHandler& input1,FileHandler& input2, FileHandler& output);
 private:
 	bool compare(const VLRegistry &reg,condition_t condition);
-
-
+	void buildIndex(FileHandler& input2, BPlusTree& bTree);
 };
 
 #endif /* SRC_RELATIONALALGEBRA_H_ */

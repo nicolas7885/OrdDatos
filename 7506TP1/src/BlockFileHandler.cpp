@@ -94,6 +94,7 @@ void BlockFileHandler::read(std::vector<VLRegistry>& data) {
 		VLRUnserializer unserializer(format);
 		unserializer.unserializeBlock(data,serializedData);
 		currRelPos++;
+		bufferPos=0;
 	}
 }
 
@@ -101,7 +102,7 @@ void BlockFileHandler::read(std::vector<VLRegistry>& data) {
  * post:reads the block at the position given*/
 void BlockFileHandler::read(std::vector<VLRegistry>& data, uint relPos) {
 	if(relPos<byteMap.size() && byteMap[relPos]!=0){
-		fs.seekp(calculateOffset(relPos));//todo should be seekg only
+//		fs.seekp(calculateOffset(relPos));//todo should be seekg only
 		fs.seekg(calculateOffset(relPos));
 		currRelPos=relPos;
 		this->read(data);
@@ -127,9 +128,9 @@ ulint BlockFileHandler::writeNext(const VLRegistry & reg){
 				return -1;
 		}//avoid almost full blocks
 		std::vector<VLRegistry> block;
-		read(block,relPos);
+		this->read(block,relPos);
 		block.push_back(reg);
-		if(write(block,relPos)==0)
+		if(this->write(block,relPos)==0)
 			notWritten=false;
 		else
 			std::cout<<"overflow"<<std::endl;
@@ -145,14 +146,17 @@ ulint BlockFileHandler::writeNext(const VLRegistry & reg){
  * If EOF is reached stops reading, and returns true.*/
 bool BlockFileHandler::readNext(VLRegistry& reg) {
 	if(bufferPos<readBuffer.size()){
+		//next reg in buffer
 		reg=readBuffer[bufferPos];
 		bufferPos++;
 		return true;
 	}else{
+		//find next not-empty block
 		while(!this->eof() && byteMap[currRelPos]==0){
 			currRelPos++;
 		}
 		if(!this->eof()){
+			//get next block and read first reg
 			this->read(readBuffer,currRelPos);
 			bufferPos=0;
 			return readNext(reg);
@@ -168,6 +172,7 @@ void BlockFileHandler::deleteBlock(uint relPos) {
 	if(relPos<byteMap.size() && byteMap[relPos]){
 		std::vector<char> emptyData;
 		writeBin(relPos,emptyData);
+		bufferPos=0;
 	}
 }
 
@@ -212,8 +217,12 @@ uint BlockFileHandler::blockSizeInBytes() {
 	return blockSizeInBytes;
 }
 
+/*returns relPos of get pointer*/
 uint BlockFileHandler::tellg() {
-	return currRelPos;
+	if(!currRelPos)
+		return currRelPos;
+	else
+		return currRelPos-1;
 }
 
 void BlockFileHandler::rewriteByteMap() {
