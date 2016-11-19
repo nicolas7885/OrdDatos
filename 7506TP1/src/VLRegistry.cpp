@@ -18,7 +18,7 @@ VLRegistry::VLRegistry(int id, std::string format){
 	std::stringstream ss(format);
 	std::string fieldType;
 	while (ss >> fieldType) {
-		addEmptyField(typeFromString(fieldType));
+		addEmptyField(Field::typeFromString(fieldType));
 	}
 }
 
@@ -80,4 +80,7 @@ uint VLRegistry::getNumOfFields() const{
 	return fields.size();
 }
 
-
+/*adds field at end of registry*/
+void VLRegistry::addNewField(const Field& field) {
+	fields.push_back(field);
+}

@@ -148,7 +148,7 @@ void FileHandler::setFormat(std::string format) {
 	std::stringstream ss(format);
 	std::string field;
 	while (ss >> field) {
-		char fieldId = typeFromString(field);//auto cast here
+		char fieldId = Field::typeFromString(field);//auto cast here
 		metadata[FORMAT_SIZE_POS]++;
 		metadata[metadata[FORMAT_SIZE_POS]+1] = fieldId;
 	}

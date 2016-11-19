@@ -101,7 +101,8 @@ void BlockFileHandler::read(std::vector<VLRegistry>& data) {
  * post:reads the block at the position given*/
 void BlockFileHandler::read(std::vector<VLRegistry>& data, uint relPos) {
 	if(relPos<byteMap.size() && byteMap[relPos]!=0){
-		fs.seekp(calculateOffset(relPos));
+		fs.seekp(calculateOffset(relPos));//todo should be seekg only
+		fs.seekg(calculateOffset(relPos));
 		currRelPos=relPos;
 		this->read(data);
 	}
@@ -211,6 +212,10 @@ uint BlockFileHandler::blockSizeInBytes() {
 	return blockSizeInBytes;
 }
 
+uint BlockFileHandler::tellg() {
+	return currRelPos;
+}
+
 void BlockFileHandler::rewriteByteMap() {
 	fs.seekg(METADATA_SIZE);
 	fs.write(&byteMap[0], blockSizeInBytes());
@@ -221,4 +226,17 @@ void BlockFileHandler::restartBuffersToBeginning() {
 	bufferPos = 0;
 	currRelPos = 0;
 	readBuffer.clear();
+}
+
+bool BlockFileHandler::get(uint relPos, int id, VLRegistry& result) {
+	std::vector<VLRegistry> block;
+	this->read(block,relPos);
+	//todo use iterator
+	for(uint i=0;i<block.size(); i++){
+		if(block[i].getField(0).value.i4==id){
+			result=block[i];
+			return true;
+		}
+	}
+	return false;
 }

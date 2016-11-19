@@ -12,6 +12,8 @@
 #include <limits>
 #include <iostream>
 
+#define SHOW_SUCCESS_IN_CONSOLE false
+
 void insertManyNodes(const int amountOfNodes) {
 	bool failed=false;
 	BPlusTree tree("treeTest.bin");
@@ -32,7 +34,8 @@ void insertManyNodes(const int amountOfNodes) {
 				<< std::endl;
 		failed=true;
 	}
-	if(!failed)std::cout <<"insert "<<amountOfNodes<<" (ordered) success"<<std::endl;
+	if(!failed && SHOW_SUCCESS_IN_CONSOLE)
+		std::cout <<"insert "<<amountOfNodes<<" (ordered) success"<<std::endl;
 }
 
 void insertManyNodesUnordered(const int amountOfNodes) {
@@ -55,7 +58,8 @@ void insertManyNodesUnordered(const int amountOfNodes) {
 				<< std::endl;
 		failed=true;
 	}
-	if(!failed)std::cout <<"insert "<<amountOfNodes<<" (unordered) success"<<std::endl;
+	if(!failed && SHOW_SUCCESS_IN_CONSOLE)
+		std::cout <<"insert "<<amountOfNodes<<" (unordered) success"<<std::endl;
 }
 
 void runTreeTests(){
@@ -77,7 +81,8 @@ void runTreeTests(){
 			std::cout<<"insert one failed(value wrong)"<<std::endl;
 			failed=false;
 		}
-		if(!failed) std::cout <<"insert one success"<<std::endl;
+		if(!failed && SHOW_SUCCESS_IN_CONSOLE)
+			std::cout <<"insert one success"<<std::endl;
 		//insert with same key, replaces it.
 		first.value=0;
 		tree.insert(first);
@@ -86,7 +91,8 @@ void runTreeTests(){
 			std::cout<<"replace insert failed(value wrong)"<<std::endl;
 			failed=true;
 		}
-		if(!failed)std::cout <<"replace insert success"<<std::endl;
+		if(!failed && SHOW_SUCCESS_IN_CONSOLE)
+			std::cout <<"replace insert success"<<std::endl;
 	}
 	{
 		//put many elements in(should be one node only), in order, can find one of them

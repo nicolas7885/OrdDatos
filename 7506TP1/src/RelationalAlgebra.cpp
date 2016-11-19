@@ -24,7 +24,8 @@ RelationalAlgebra::~RelationalAlgebra() {
 }
 
 /*pre: input 1 and 2 opened and valid, have compatible format with output. Output opened and valid
- * post:reads all input 1 writing it into output. Then reads all input two and writes it into output*/
+ * post:reads all input 1 writing it into output. Then reads all input two and writes it into output.
+ * Does not check for duplicates.*/
 void RelationalAlgebra::unionOperator(FileHandler& input1, FileHandler& input2,
 		FileHandler& output) {
 	input1.restartBuffersToBeginning();
@@ -50,11 +51,11 @@ void RelationalAlgebra::projectionOperator(FileHandler& input,
 	while(input.readNext(oldReg)){
 		VLRegistry newReg;
 		std::stringstream ss(selectionFields);
-		for(uint fieldNumber, numberOfFields=0;ss >> fieldNumber;numberOfFields++){
-			if(oldReg.getNumOfFields()>fieldNumber){
-				newReg.addEmptyField();
+		for(uint fieldNumber, numberOfFields=0;ss >> fieldNumber;){
+			if(fieldNumber<oldReg.getNumOfFields()){
 				Field f=oldReg.getField(fieldNumber);
-				newReg.setField(numberOfFields,f);
+				newReg.addEmptyField(f.type);
+				newReg.setField(numberOfFields++,f);
 			}
 		}
 		if(newReg.getNumOfFields()){
@@ -70,22 +71,20 @@ void RelationalAlgebra::projectionOperator(FileHandler& input,
  *  and writes the "union" between both registries and writes it into output*/
 void RelationalAlgebra::productOperator(FileHandler& input1,
 		FileHandler& input2, FileHandler& output) {
-	VLRegistry reg1;
 	input1.restartBuffersToBeginning();
+	VLRegistry reg1;
 	while(input1.readNext(reg1)){
-		VLRegistry reg2;
 		input2.restartBuffersToBeginning();
+		VLRegistry reg2;
 		while(input2.readNext(reg2)){
 			VLRegistry combination;
 			for (uint i = 0; i < reg1.getNumOfFields(); i++) {
 				Field field=reg1.getField(i);
-				combination.addEmptyField(field.type);
-				combination.setField(i,field);
+				combination.addNewField(field);
 			}
-			for (uint i = 0, reg1Size=reg1.getNumOfFields(); i < reg2.getNumOfFields(); i++) {
+			for (uint i = 0; i < reg2.getNumOfFields(); i++) {
 				Field field=reg2.getField(i);
-				combination.addEmptyField(field.type);
-				combination.setField(i+reg1Size,field);
+				combination.addNewField(field);
 			}
 			output.writeNext(combination);
 		}
@@ -100,29 +99,10 @@ bool RelationalAlgebra::compare(const VLRegistry &reg,condition_t condition){
 	Field compared=reg.getField(condition.pos);
 	Field reference=condition.value;
 
-	if(compared.type!=reference.type)
-		return false;
-
-	switch(reference.type){
-	case I1:
-		return compare(compared.value.i1,reference.value.i1,condition.mode);
-	case I2:
-		return compare(compared.value.i2,reference.value.i2,condition.mode);
-	case I4:
-		return compare(compared.value.i4,reference.value.i4,condition.mode);
-	case I8:
-		return compare(compared.value.i8,reference.value.i8,condition.mode);
-	case SD:
-	case SL:
-	case D:
-	case DT:
-		return compare(compared.s,reference.s,condition.mode);
-	default:
-		return false;
-	}
+	return Field::compareFields(compared,reference,condition.mode);
 }
 
-/*pre: input and output opened and valid. They both have same format
+/*pre: input and output open and valid. They both have same format
  * filter takes a field and determines if it goes or not */
 void RelationalAlgebra::selectionOperator(FileHandler& input, FileHandler& output,
 		condition_t condition){
@@ -133,3 +113,39 @@ void RelationalAlgebra::selectionOperator(FileHandler& input, FileHandler& outpu
 			output.writeNext(reg);
 	}
 }
+
+#include "BPlusTree.h"
+/*pre: input 1 and 2 opened and valid, have compatible format with output. Output opened and valid
+ * post: Puts into output all the reg of input1 that are not in input2. Equality determined by id.*/
+void RelationalAlgebra::differenceOperator(FileHandler& input1,
+		FileHandler& input2, FileHandler& output) {
+	/*todo difference
+	 * idea: build a primary, exhaustive, index*/
+	BPlusTree bTree("tempIndex.bin");
+	input2.restartBuffersToBeginning();
+	VLRegistry reg;
+	//build index
+	while(input2.readNext(reg)){
+		Field f=reg.getField(0);
+		pair_t p={input2.tellg(),f.value.i4};
+		bTree.insert(p);
+	}
+	//check no equal reg in dif for each
+	input1.restartBuffersToBeginning();
+	while(input1.readNext(reg)){
+		Field f=reg.getField(0);
+		uint relPos;
+		bool shouldInclude=true;
+		if(bTree.find(f.value.i4,relPos)){
+			VLRegistry reg2;
+			if(input2.get(relPos,f.value.i4,reg2) && reg==reg2)
+				shouldInclude=false;
+		}
+		if(shouldInclude)
+			output.writeNext(reg);
+	}
+}
+
+//todo agrupation
+//todo wierd union
+//todo intersection

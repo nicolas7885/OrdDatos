@@ -34,6 +34,8 @@ public:
 	void read(std::vector<VLRegistry> &data,uint relPos);
 	virtual ulint writeNext(const VLRegistry & reg);
 	virtual bool readNext(VLRegistry &reg);
+	virtual uint tellg();
+	virtual bool get(uint relPos, int id, VLRegistry& result);
 	void deleteBlock(uint relPos);
 	virtual bool eof();
 protected:

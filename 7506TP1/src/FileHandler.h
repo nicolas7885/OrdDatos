@@ -39,6 +39,11 @@ public:
 	 * Does nothing and returns false if EOF is reached before reading into reg
 	 * If EOF is reached stops reading, and returns true.*/
 	virtual bool readNext(VLRegistry &reg)=0;
+	/*gives the rel position of the last reg to be read*/
+	virtual uint tellg()=0;
+	/*obtains reg at relPos with id matching if possible and returns true.
+	 * returns false if not found or out of bounds*/
+	virtual bool get(uint relPos, int id, VLRegistry& result)=0;
 	virtual bool eof();
 	std::string getFormatAsString();
 	void toCsv(std::string outputPath);

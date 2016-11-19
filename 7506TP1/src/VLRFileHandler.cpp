@@ -42,7 +42,8 @@ VLRFileHandler::~VLRFileHandler() {
  * Does nothing and returns false if EOF is reached before reading into reg.*/
 bool VLRFileHandler::read(ulint relPos, VLRegistry& reg) {
 	ulint pos= calculateOffset(relPos);
-	fs.seekp(pos);
+//	fs.seekp(pos);//todo should only be seekg
+	fs.seekg(pos);
 	char dataType = readType();
 	if(this->eof())
 		return false;
@@ -54,31 +55,49 @@ bool VLRFileHandler::read(ulint relPos, VLRegistry& reg) {
 	}
 }
 
+/*replaces reg at pos with a free pointer, witch points to nextFreePointer
+ * returns size of reg replaced*/
+regSize_t VLRFileHandler::replaceRegWithFreePointer(ulint pos,
+		ulint nextFreePointerPos) {
+	fs.seekg(pos);
+	readType();
+	//if(readType()!=DATA_TYPE_REG) //todo check type
+	regSize_t size = readSize();
+	writePointerToFree(pos, size, nextFreePointerPos);
+	return size;
+}
+
+/*post: finds and returns the pos of the next pointer in the list after pos.
+ * prevFreePointer points to pointer right before pos*/
+ulint VLRFileHandler::findPointerInsertionPos(ulint pos,
+		PointerToFree& prevFreePointer) {
+	ulint nextFreePointerPos = 0;
+	ulint searchPos = firstFreePtr;
+	//find last free pointer before pos to be deleted
+	while (!this->eof() && !nextFreePointerPos && searchPos) {
+		PointerToFree currFreePointer = readPointerToFree(searchPos);
+		if (prevFreePointer.pointerToNext > pos) {
+			//found
+			nextFreePointerPos = prevFreePointer.pointerToNext;
+		} else {
+			searchPos = currFreePointer.pointerToNext; //if next pointer==0 exits while
+			prevFreePointer = currFreePointer;
+		}
+	}
+	return nextFreePointerPos;
+}
+
 /* pre: relPos was obtained from a write or read operation
  * rel pos is 0 at the start of the data segment
  * post:deletes the reg found at relPos. */
 void VLRFileHandler::deleteReg(ulint relPos) {
-	restartBuffersToBeginning();
+	this->restartBuffersToBeginning();
 	ulint pos= calculateOffset(relPos);
 	PointerToFree prevFreePointer={0,0,firstFreePtr};
-	ulint nextFreePointerPos=0;
-	ulint searchPos=firstFreePtr;
-	//find last free pointer before pos to be deleted
-	while (!this->eof() && !nextFreePointerPos && searchPos) {
-		PointerToFree currFreePointer = readPointerToFree(searchPos);
-		if (prevFreePointer.pointerToNext>pos) {
-			nextFreePointerPos=prevFreePointer.pointerToNext;
-		} else {
-			searchPos = currFreePointer.pointerToNext;//if next pointer==0 exits while
-			prevFreePointer = currFreePointer;
-		}
-	}
+	ulint nextFreePointerPos = findPointerInsertionPos(pos, prevFreePointer);
 	updateLinkedList(prevFreePointer,pos);
-	fs.seekg(pos);
-	readType();
-	//if(readType()!=DATA_TYPE_REG) //error
-	regSize_t size=readSize();
-	writePointerToFree(pos,size,nextFreePointerPos);
+	replaceRegWithFreePointer(pos, nextFreePointerPos);
+	lastRelPos=(uint)fs.tellp()-metadata.size();
 }
 
 /*read the next free Pointer at currPos.
@@ -86,11 +105,13 @@ void VLRFileHandler::deleteReg(ulint relPos) {
 PointerToFree VLRFileHandler::readPointerToFree(ulint pos) {
 	PointerToFree newPointer;
 	newPointer.pos=pos;
-	fs.seekp(pos);
+	fs.seekg(pos);
+	fs.seekp(pos);//todo should only be seekg
 	readType();
 	//todo check type
 	newPointer.size=readSize();
 	fs.read((char*)&newPointer.pointerToNext,sizeof(newPointer.pointerToNext));
+	lastRelPos=(uint)fs.tellg()-metadata.size();
 	return newPointer;
 }
 
@@ -180,9 +201,9 @@ ulint VLRFileHandler::writeNext(const VLRegistry& reg) {
 		serializer.serializeReg(serializedData,reg);
 	}
 	ulint pos = findPosToWriteAndUpdateList(serializedData);
-	if(pos<512){//avoid metadata
-		fs.seekg (0, fs.end);
-		pos = fs.tellg();
+	if(pos<metadata.size()){//first reg,avoid metadata
+		fs.seekp (0, fs.end);
+		pos = fs.tellp();
 	}
 	this->writeBin(pos,serializedData,DATA_TYPE_REG);
 	return pos;
@@ -192,17 +213,19 @@ ulint VLRFileHandler::writeNext(const VLRegistry& reg) {
  * Does nothing and returns false if EOF is reached before reading into reg.*/
 bool VLRFileHandler::readNext(VLRegistry& reg) {
 	while(!this->eof()){
+		lastRelPos=(uint)fs.tellg()-metadata.size();//todo remember why this goes here and comment
 		char dataType = readType();
 		if(this->eof())
 			return false;
 		switch(dataType){
 		case DATA_TYPE_REG:
 			this->read(reg);
+			lastRelPos=(uint)fs.tellg()-metadata.size();
 			return true;
 			break;
 		case DATA_TYPE_POINTER_TO_FREE:{
 			regSize_t freeSize=readSize();
-			fs.seekp(freeSize,std::ios_base::cur);
+			fs.seekg(freeSize,std::ios_base::cur);
 			break;
 		}
 		default:
@@ -216,12 +239,22 @@ ulint VLRFileHandler::calculateOffset(ulint relPos) {
 	return relPos+metadata.size();
 }
 
+bool VLRFileHandler::get(uint relPos, int id, VLRegistry& result) {
+	this->read(relPos,result);
+	if(result.getField(0).value.i4==id){
+		return true;
+	}else{
+		return false;
+	}
+}
+
 /*writes data type, serializedData size, and serializedData  into pos.
  * Writes over what was there.
  * There is no overflow so it returns 0, unless there is a writing error, then returns -1.*/
 int VLRFileHandler::writeBin(uint pos,
 		const std::vector<char>& serializedData, char dataType) {
-	fs.seekg(pos);
+//	fs.seekg(pos);//todo should only be seekp
+	fs.seekp(pos);
 	fs.write(&dataType, sizeof(dataType));//data type
 	ulint size= serializedData.size();
 	fs.write((char*)&size, sizeof(size));//size
@@ -237,6 +270,7 @@ int VLRFileHandler::writeBin(uint pos,
 void VLRFileHandler::restartBuffersToBeginning() {
 	fs.clear();
 	fs.seekg(calculateOffset(0));
+//	fs.seekp(calculateOffset(0));//todo check
 }
 
 /*reads & returns the size read*/
@@ -265,4 +299,8 @@ void VLRFileHandler::read(VLRegistry& reg) {
 	VLRUnserializer unserializer(format);
 	dataIt_t dataIt = serializedData.begin();
 	unserializer.unserializeReg(reg, dataIt);
+}
+
+uint VLRFileHandler::tellg() {
+	return lastRelPos;
 }

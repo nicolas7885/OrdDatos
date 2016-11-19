@@ -174,7 +174,7 @@ condition_t obtainCondition(char* argv[], int& currentArgument) {
 	condition_t condition;
 	condition.pos = atoi(argv[++currentArgument]);
 	Field reference;
-	reference.type = typeFromString(argv[++currentArgument]);
+	reference.type = Field::typeFromString(argv[++currentArgument]);
 	switch (reference.type) {
 	case I1:
 		reference.value.i1 = atoi(argv[++currentArgument]);
@@ -242,11 +242,11 @@ void normalExecution(char* argv[]) {
 	}
 }
 
-//#include "tests.h"
+#include "tests.h"
 #include "TreeTest.h"
 
 int main(int argc, char* argv[]) {
-	//runTests();
+	runTests();
 	runTreeTests();
 	//normalExecution(argv);
 	return 0;

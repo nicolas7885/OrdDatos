@@ -19,7 +19,7 @@
 
 using namespace std;
 
-#define FORMAT "i1,i2,i4,sD,d,dT"
+#define FORMAT "i1,i2,i4,sD,d,dt"
 
 void fillRegistry(VLRegistry& reg) {
 	//set format
@@ -92,75 +92,100 @@ void runTests() {
 	createBinBlockFile(binBlockFile1);
 
 	//1 read and then output said file to csv
+	//out: 1 to 20 twice
 	BlockFileHandler blockHandler1(binBlockFile1);
 	blockHandler1.toCsv(basicFile);
 
 	//2 read block file(smaller blocks also) from csv, delete block & output
+	//out: 1 to 10, then 1 to 20
 	BlockFileHandler newBlockHandler(binBlockFile2, 0, FORMAT);
 	newBlockHandler.fromCsv(basicFile);
 	newBlockHandler.deleteBlock(1);
 	newBlockHandler.toCsv(ReadAndDeleteFile);
 
 	//3 add another block and output
+	//out: 1 to 10, then 1 to 5, then 1 to 20
 	loadBlock(cantRegBloqueEspecial,newBlockHandler);
 	newBlockHandler.toCsv(ReadAndDeleteAndPutNewFile);
 
 	//4 read vlr file from csv, and output to other
+	//out: 1 to 20 twice
 	VLRFileHandler vlrHandler(binVLRFile1, FORMAT);
 	vlrHandler.fromCsv(basicFile);
 	vlrHandler.toCsv(ReadFileVlr);
 
-	//5 delete and output
+	//5 delete in dif places and output
+	//out:3 to 20 then 2 to 20
 	vlrHandler.deleteReg(0);
-	int regSize=43+4+1;
-	vlrHandler.deleteReg(regSize*2);
+	ulint next=vlrHandler.tellg();
+	vlrHandler.deleteReg(next);
+	for(int i=3; i<=20; i++){
+		VLRegistry reg;
+		vlrHandler.readNext(reg);
+	}
+	next=vlrHandler.tellg();
+	vlrHandler.deleteReg(next);
 	vlrHandler.toCsv(ReadAndDeleteFileVlr);
 
 	//6 add 2 reg and output
+	//out: 255,127, then 2 to 20, then 1 to 20, then 127
 	VLRegistry reg(255, FORMAT);
 	fillRegistry(reg);
 	vlrHandler.writeNext(reg);
 	VLRegistry reg2(127, FORMAT);
 	fillRegistry(reg2);
 	vlrHandler.writeNext(reg2);
+	vlrHandler.writeNext(reg2);
 	vlrHandler.toCsv(ReadAndDeleteAndPutNewFileVlr);
 
 	RelationalAlgebra proccessor;
 	{//7 do union and output
-		string binUnionFile="test4B.bin";
-		string unionFile="test7Csv";
-		BlockFileHandler unionHandler(binUnionFile, 0, FORMAT);
+		//out: output of 1 and then output of 6
+		string binUnionFileName="test4B.bin";
+		string unionFileName="test7Csv";
+		BlockFileHandler unionHandler(binUnionFileName, 0, FORMAT);
 
 		proccessor.unionOperator(blockHandler1,vlrHandler,unionHandler);
-		unionHandler.toCsv(unionFile);
+		unionHandler.toCsv(unionFileName);
 	}
 	{//8 do basic selection and output
-		string binSelectionFile="test4B.bin";
-		string selectionFile="test8Csv";
-		BlockFileHandler selectionHandler(binSelectionFile, 0, FORMAT);
+		//out: reg from output 6(test) lower than compareValue
+		string binSelectionFileName="test4B.bin";
+		string selectionFileName="test8Csv";
+		BlockFileHandler selectionHandler(binSelectionFileName, 0, FORMAT);
 		Field compareValue;
 		compareValue.type=I4;
 		compareValue.value.i4=10;
 		condition_t condition={LOWER,compareValue,0};
 		proccessor.selectionOperator(vlrHandler,selectionHandler,condition);
-		selectionHandler.toCsv(selectionFile);
+		selectionHandler.toCsv(selectionFileName);
 	}
 	{//9 do projection and output
-		string binProjectionFile="test4B.bin";
-		string projectionFile="test9Csv";
-		BlockFileHandler projectionHandler(binProjectionFile, 0, "i1,d,sD");
+		//out: output from test 6 with projection applied
+		string binProjectionFileName="testPJB.bin";
+		string projectionFileName="test9Csv";
+		BlockFileHandler projectionHandler(binProjectionFileName, 0, "i1,d,sD");
 		string selectionFields="0,1,5,4";
 		proccessor.projectionOperator(vlrHandler,projectionHandler, selectionFields);
-		projectionHandler.toCsv(projectionFile);
+		projectionHandler.toCsv(projectionFileName);
 	}
 	{//10 do product and output
-		string binProductFile="test4B.bin";
-		string productFile="test10Csv";
+		//out: combinations of reg from output
+		string binProductFileName="test4B.bin";
+		string productFileName="test10Csv";
 		string combinationFormat = obtainCombinedFormat(blockHandler1,vlrHandler);
-		VLRFileHandler productHandler(binProductFile,combinationFormat);
+		VLRFileHandler productHandler(binProductFileName,combinationFormat);
 		proccessor.productOperator(blockHandler1,vlrHandler, productHandler);
-		productHandler.toCsv(productFile);
+		productHandler.toCsv(productFileName);
 	}
+//	{//11 do difference and output
+//		string binDifferenceFileName="test4B.bin";
+//		string differenceFileName="test11Csv";
+//		string combinationFormat = obtainCombinedFormat(blockHandler1,vlrHandler);
+//		VLRFileHandler differenceHandler(binDifferenceFileName,combinationFormat);
+//		proccessor.differenceOperator(blockHandler1,vlrHandler, differenceHandler);
+//		differenceHandler.toCsv(differenceFileName);
+//	}
 }
 
 
