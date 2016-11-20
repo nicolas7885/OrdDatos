@@ -6,9 +6,11 @@
  */
 
 #include "VLRUnserializer.h"
-#include "VLRegistry.h"
+
 #include <vector>
+
 #include "Field.h"
+#include "VLRegistry.h"
 
 VLRUnserializer::VLRUnserializer(std::vector<FieldType> &format)
 :format(format){

@@ -9,8 +9,9 @@
 
 #include <vector>
 #include <cstring>
-#include "VLRegistry.h"
+
 #include "Field.h"
+#include "VLRegistry.h"
 
 VLRSerializer::VLRSerializer() {}
 

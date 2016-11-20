@@ -12,8 +12,8 @@
 #include <string>
 #include <vector>
 
-#include "VLRegistry.h"
-#include "Field.h"
+#include "../VLRegistries/Field.h"
+#include "../VLRegistries/VLRegistry.h"
 
 #define CHUNK_SIZE 512
 #define METADATA_SIZE CHUNK_SIZE

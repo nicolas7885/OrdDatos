@@ -13,10 +13,10 @@
 #include <string>
 #include <vector>
 
-#include "Field.h"
-#include "VLRegistry.h"
-#include "VLRSerializer.h"
-#include "VLRUnserializer.h"
+#include "../VLRegistries/Field.h"
+#include "../VLRegistries/VLRegistry.h"
+#include "../VLRegistries/VLRSerializer.h"
+#include "../VLRegistries/VLRUnserializer.h"
 
 #define BLOCK_CHARGE_PERCENTAGE 80
 #define METADATA_BSIZE_POS 0

@@ -5,13 +5,14 @@
  *      Author: nicolas
  */
 
-#ifndef SRC_BPLUSTREE_H_
-#define SRC_BPLUSTREE_H_
+#ifndef SRC_INDEX_BPLUSTREE_H_
+#define SRC_INDEX_BPLUSTREE_H_
 
-#include "BNode.h"
 #include <string>
 #include <fstream>
 #include <vector>
+
+#include "../Index/BNode.h"
 
 typedef unsigned int uint;
 
@@ -36,4 +37,4 @@ private:
 
 };
 
-#endif /* SRC_BPLUSTREE_H_ */
+#endif /* SRC_INDEX_BPLUSTREE_H_ */

@@ -11,8 +11,9 @@
 #include <iostream>
 #include <iterator>
 #include <sstream>
-#include "Field.h"
-#include "VLRegistry.h"
+
+#include "../VLRegistries/Field.h"
+#include "../VLRegistries/VLRegistry.h"
 
 /*creates file handler for file in path. Reads metadata.
  * */

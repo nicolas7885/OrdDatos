@@ -5,8 +5,8 @@
  *      Author: nicolas
  */
 
-#ifndef SRC_VLRUNSERIALIZER_H_
-#define SRC_VLRUNSERIALIZER_H_
+#ifndef SRC_VLREGISTRIES_VLRUNSERIALIZER_H_
+#define SRC_VLREGISTRIES_VLRUNSERIALIZER_H_
 
 #include <vector>
 
@@ -28,4 +28,4 @@ public:
 	void unserializeBlock(std::vector<VLRegistry> &block, const std::vector<char> &serializedData);
 };
 
-#endif /* SRC_VLRUNSERIALIZER_H_ */
+#endif /* SRC_VLREGISTRIES_VLRUNSERIALIZER_H_ */

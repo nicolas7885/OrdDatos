@@ -11,11 +11,11 @@
 #include <string>
 #include <vector>
 
-#include "BlockFileHandler.h"
-#include "Field.h"
+#include "FileHandlers/BlockFileHandler.h"
+#include "FileHandlers/VLRFileHandler.h"
 #include "RelationalAlgebra.h"
-#include "VLRegistry.h"
-#include "VLRFileHandler.h"
+#include "VLRegistries/Field.h"
+#include "VLRegistries/VLRegistry.h"
 
 using namespace std;
 

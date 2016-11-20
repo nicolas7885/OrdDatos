@@ -5,8 +5,8 @@
  *      Author: nicolas
  */
 
-#ifndef SRC_BNODE_H_
-#define SRC_BNODE_H_
+#ifndef SRC_INDEX_BNODE_H_
+#define SRC_INDEX_BNODE_H_
 
 #include <vector>
 
@@ -89,4 +89,4 @@ public:
 private:
 	int findElementInsertPos(int elementKey);
 };
-#endif /* SRC_BNODE_H_ */
+#endif /* SRC_INDEX_BNODE_H_ */

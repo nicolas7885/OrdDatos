@@ -9,9 +9,10 @@
 
 #include <string>
 #include <iostream>
-#include "VLRegistry.h"
-#include "VLRSerializer.h"
-#include "VLRUnserializer.h"
+
+#include "../VLRegistries/VLRegistry.h"
+#include "../VLRegistries/VLRSerializer.h"
+#include "../VLRegistries/VLRUnserializer.h"
 
 #define DATA_TYPE_REG 1
 #define DATA_TYPE_POINTER_TO_FREE 2

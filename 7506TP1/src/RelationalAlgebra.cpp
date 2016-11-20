@@ -11,8 +11,8 @@
 #include <sstream>
 #include <string>
 
-#include "Field.h"
-#include "VLRegistry.h"
+#include "VLRegistries/Field.h"
+#include "VLRegistries/VLRegistry.h"
 
 RelationalAlgebra::RelationalAlgebra() {
 	// TODO Auto-generated constructor stub
@@ -114,7 +114,7 @@ void RelationalAlgebra::selectionOperator(FileHandler& input, FileHandler& outpu
 	}
 }
 
-#include "BPlusTree.h"
+#include "Index/BPlusTree.h"
 
 void RelationalAlgebra::buildIndex(FileHandler& input2,BPlusTree& bTree) {
 	input2.restartBuffersToBeginning();

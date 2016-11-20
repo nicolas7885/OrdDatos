@@ -5,12 +5,13 @@
  *      Author: nicolas
  */
 
-#ifndef SRC_TREETEST_H_
-#define SRC_TREETEST_H_
+#ifndef SRC_INDEX_TREETEST_H_
+#define SRC_INDEX_TREETEST_H_
 
-#include "BPlusTree.h"
 #include <limits>
 #include <iostream>
+
+#include "BPlusTree.h"
 
 #define SHOW_SUCCESS_IN_CONSOLE false
 
@@ -133,4 +134,4 @@ void runTreeTests(){
 
 
 
-#endif /* SRC_TREETEST_H_ */
+#endif /* SRC_INDEX_TREETEST_H_ */

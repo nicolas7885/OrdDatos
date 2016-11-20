@@ -5,15 +5,15 @@
  *      Author: nicolas
  */
 
-#ifndef SRC_BLOCKFILEHANDLER_H_
-#define SRC_BLOCKFILEHANDLER_H_
+#ifndef SRC_FILEHANDLERS_BLOCKFILEHANDLER_H_
+#define SRC_FILEHANDLERS_BLOCKFILEHANDLER_H_
 
 #include <iostream>
 #include <string>
 #include <vector>
 
+#include "../VLRegistries/VLRegistry.h"
 #include "FileHandler.h"
-#include "VLRegistry.h"
 
 #define INVALID_BSIZE -1
 
@@ -47,4 +47,4 @@ private:
 	void rewriteByteMap();
 };
 
-#endif /* SRC_BLOCKFILEHANDLER_H_ */
+#endif /* SRC_FILEHANDLERS_BLOCKFILEHANDLER_H_ */

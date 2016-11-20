@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <sstream>
+
 #include "Field.h"
 
 /*creates a registry with specified format, and id at field 0*/

@@ -11,9 +11,9 @@
 #include <sys/types.h>
 #include <string>
 
-#include "BPlusTree.h"
-#include "Field.h"
-#include "FileHandler.h"
+#include "FileHandlers/FileHandler.h"
+#include "Index/BPlusTree.h"
+#include "VLRegistries/Field.h"
 
 class VLRegistry;
 

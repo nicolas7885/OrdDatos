@@ -6,6 +6,7 @@
  */
 
 #include "Field.h"
+
 #include <string>
 
 FieldType Field::typeFromString(const std::string& field) {

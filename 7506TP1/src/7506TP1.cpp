@@ -14,10 +14,10 @@
 #include <string>
 #include <vector>
 
-#include "BlockFileHandler.h"
-#include "Field.h"
+#include "FileHandlers/BlockFileHandler.h"
+#include "FileHandlers/VLRFileHandler.h"
 #include "RelationalAlgebra.h"
-#include "VLRFileHandler.h"
+#include "VLRegistries/Field.h"
 
 using namespace std;
 
@@ -243,7 +243,7 @@ void normalExecution(char* argv[]) {
 }
 
 #include "tests.h"
-#include "TreeTest.h"
+#include "Index/TreeTest.h"
 
 int main(int argc, char* argv[]) {
 	runTests();

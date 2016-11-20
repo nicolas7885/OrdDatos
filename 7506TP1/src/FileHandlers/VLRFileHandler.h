@@ -5,8 +5,8 @@
  *      Author: nicolas
  */
 
-#ifndef SRC_VLRFILEHANDLER_H_
-#define SRC_VLRFILEHANDLER_H_
+#ifndef SRC_FILEHANDLERS_VLRFILEHANDLER_H_
+#define SRC_FILEHANDLERS_VLRFILEHANDLER_H_
 
 #include "FileHandler.h"
 
@@ -53,4 +53,4 @@ private:
 	ulint findPointerInsertionPos(ulint pos, PointerToFree& prevFreePointer);
 };
 
-#endif /* SRC_VLRFILEHANDLER_H_ */
+#endif /* SRC_FILEHANDLERS_VLRFILEHANDLER_H_ */

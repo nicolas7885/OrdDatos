@@ -5,7 +5,8 @@
  *      Author: nicolas
  */
 
-#include "BPlusTree.h"
+#include "../Index/BPlusTree.h"
+
 #include <iostream>
 
 //overrides previous index at file
@@ -46,7 +47,7 @@ void BPlusTree::write(std::vector<int>& nodeData, uint relPos) {
 	file.write((char*)&nodeData[0],NODE_SIZE);
 }
 
-/*gets serialized data of node in relPos and stroes in node data*/
+/*gets serialized data of node in relPos and stores in node data*/
 void BPlusTree::read(std::vector<int>& nodeData, uint relPos) {
 	file.seekg(relPos*NODE_SIZE);
 	file.read((char*)&nodeData[0],NODE_SIZE);
