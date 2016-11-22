@@ -18,7 +18,7 @@ typedef std::vector<char>::const_iterator dataIt_t;
 class VLRUnserializer {
 	std::vector<FieldType> format;
 
-	void reziseBlock(int newSize, std::vector<VLRegistry>& block);
+	void reziseBlock(uint newSize, std::vector<VLRegistry>& block);
 	void initializeRegAsEmpty(VLRegistry &newReg);
 
 public:

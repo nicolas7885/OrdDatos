@@ -11,8 +11,8 @@
 #include <string>
 #include <vector>
 
-#include "FileHandlers/BlockFileHandler.h"
-#include "FileHandlers/VLRFileHandler.h"
+#include "FileHandlers/VLRBlockFileH.h"
+#include "FileHandlers/VLRSecFileH.h"
 #include "RelationalAlgebra.h"
 #include "VLRegistries/Field.h"
 #include "VLRegistries/VLRegistry.h"
@@ -44,7 +44,7 @@ void fillRegistry(VLRegistry& reg) {
 	reg.setField(6, field);
 }
 
-void loadBlock(const int cantRegAAgregar, BlockFileHandler& handler) {
+void loadBlock(const int cantRegAAgregar, VLRBlockFileH& handler) {
 	vector<VLRegistry> block;
 	for (int i = 1; i <= cantRegAAgregar; i++) {
 		//create reg
@@ -57,7 +57,7 @@ void loadBlock(const int cantRegAAgregar, BlockFileHandler& handler) {
 }
 
 void createBinBlockFile(string path) {
-	BlockFileHandler handler(path, 4, FORMAT);
+	VLRBlockFileH handler(path, 4, FORMAT);
 	const int cantBloquesAAgregar = 2;
 	const int cantRegAAgregar = 20;
 	for (int i = 0; i < cantBloquesAAgregar; i++) {
@@ -65,15 +65,15 @@ void createBinBlockFile(string path) {
 	}
 }
 
-string obtainCombinedFormat(BlockFileHandler& blockHandler1,
-		VLRFileHandler& vlrHandler) {
+string obtainCombinedFormat(VLRBlockFileH& blockHandler1,
+		VLRSecFileH& vlrHandler) {
 	string combinationFormat = blockHandler1.getFormatAsString() + ",i4,"
 			+ vlrHandler.getFormatAsString();
 	return combinationFormat;
 }
 
-void doMockSelection(RelationalAlgebra& proccessor, VLRFileHandler& vlrHandler,
-		BlockFileHandler& selectionHandler) {
+void doMockSelection(RelationalAlgebra& proccessor, VLRSecFileH& vlrHandler,
+		VLRBlockFileH& selectionHandler) {
 	Field compareValue;
 	compareValue.type = I4;
 	compareValue.value.i4 = 10;
@@ -102,13 +102,14 @@ void runTests() {
 
 	//1 read and then output said file to csv
 	//out: 1 to 20 twice
-	BlockFileHandler blockHandler1(binBlockFile1);
+	VLRBlockFileH blockHandler1(binBlockFile1);
 	blockHandler1.toCsv(basicFile);
 
 	//2 read block file(smaller blocks also) from csv, delete block & output
 	//out: 1 to 10, then 1 to 20
-	BlockFileHandler newBlockHandler(binBlockFile2, 0, FORMAT);
+	VLRBlockFileH newBlockHandler(binBlockFile2, 0, FORMAT);
 	newBlockHandler.fromCsv(basicFile);
+	newBlockHandler.toCsv(ReadAndDeleteFile);
 	newBlockHandler.deleteBlock(1);
 	newBlockHandler.toCsv(ReadAndDeleteFile);
 
@@ -119,7 +120,7 @@ void runTests() {
 
 	//4 read vlr file from csv, and output to other
 	//out: 1 to 20 twice
-	VLRFileHandler vlrHandler(binVLRFile1, FORMAT);
+	VLRSecFileH vlrHandler(binVLRFile1, FORMAT);
 	vlrHandler.fromCsv(basicFile);
 	vlrHandler.toCsv(ReadFileVlr);
 
@@ -154,7 +155,7 @@ void runTests() {
 		//out: output of 1 and then output of 6
 		string binUnionFileName="test4B.bin";
 		string unionFileName="test7Csv";
-		BlockFileHandler unionHandler(binUnionFileName, 0, FORMAT);
+		VLRBlockFileH unionHandler(binUnionFileName, 0, FORMAT);
 
 		proccessor.unionOperator(blockHandler1,vlrHandler,unionHandler);
 		unionHandler.toCsv(unionFileName);
@@ -163,7 +164,7 @@ void runTests() {
 		//out: reg from output 6(test) lower than compareValue
 		string selectionFileName="test8Csv";
 		string binSelectionFileName="testSel.bin";
-		BlockFileHandler selectionHandler(binSelectionFileName, 1, FORMAT);
+		VLRBlockFileH selectionHandler(binSelectionFileName, 1, FORMAT);
 		doMockSelection(proccessor, vlrHandler, selectionHandler);
 		selectionHandler.toCsv(selectionFileName);
 	}
@@ -171,7 +172,7 @@ void runTests() {
 		//out: output from test 6 with projection applied
 		string binProjectionFileName="testPJB.bin";
 		string projectionFileName="test9Csv";
-		BlockFileHandler projectionHandler(binProjectionFileName, 0, "i1,d,sD");
+		VLRBlockFileH projectionHandler(binProjectionFileName, 0, "i1,d,sD");
 		string selectionFields="0,1,5,4";
 		proccessor.projectionOperator(vlrHandler,projectionHandler, selectionFields);
 		projectionHandler.toCsv(projectionFileName);
@@ -181,16 +182,16 @@ void runTests() {
 		string binProductFileName="test4B.bin";
 		string productFileName="test10Csv";
 		string combinationFormat = obtainCombinedFormat(blockHandler1,vlrHandler);
-		VLRFileHandler productHandler(binProductFileName,combinationFormat);
+		VLRSecFileH productHandler(binProductFileName,combinationFormat);
 		proccessor.productOperator(blockHandler1,vlrHandler, productHandler);
 		productHandler.toCsv(productFileName);
 	}
 	{//11 do difference and output
 		string binSelectionFileName="testSel.bin";
-		BlockFileHandler selectionHandler(binSelectionFileName);
+		VLRBlockFileH selectionHandler(binSelectionFileName);
 		string binDifferenceFileName="test4B.bin";
 		string differenceFileName="test11Csv";
-		BlockFileHandler differenceHandler(binDifferenceFileName,0, FORMAT);
+		VLRBlockFileH differenceHandler(binDifferenceFileName,0, FORMAT);
 		proccessor.differenceOperator(blockHandler1,selectionHandler, differenceHandler);
 		differenceHandler.toCsv(differenceFileName);
 	}

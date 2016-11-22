@@ -28,12 +28,12 @@ FieldType Field::typeFromString(const std::string& field) {
 	if (field == "sL")
 		fieldId = SL;
 	if (field == "sl")
-		fieldId = DT;
+		fieldId = SL;
 
 	if (field == "sD")
 		fieldId = SD;
 	if (field == "sd")
-		fieldId = DT;
+		fieldId = SD;
 
 	if (field == "d")
 		fieldId = D;

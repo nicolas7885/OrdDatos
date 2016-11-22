@@ -14,8 +14,8 @@
 #include <string>
 #include <vector>
 
-#include "FileHandlers/BlockFileHandler.h"
-#include "FileHandlers/VLRFileHandler.h"
+#include "FileHandlers/VLRBlockFileH.h"
+#include "FileHandlers/VLRSecFileH.h"
 #include "RelationalAlgebra.h"
 #include "VLRegistries/Field.h"
 
@@ -48,54 +48,54 @@ void imprimirAyuda(){
 void importFromCsv(int& currentArgument, char* argv[]) {
 	//todo errors when wrong number of arg
 	string input(argv[++currentArgument]);
-	FileHandler* handler;
+	VLRFileHandler* handler;
 	string next(argv[++currentArgument]);
 	if (next=="-b") {
 		int bSize=atoi(argv[++currentArgument]);
 		string output(argv[++currentArgument]);
 		string format(argv[++currentArgument]);
-		handler = new BlockFileHandler(output, bSize,format);
+		handler = new VLRBlockFileH(output, bSize,format);
 	} else {
 		string output=argv[currentArgument];
 		string format=argv[++currentArgument];
-		handler = new VLRFileHandler(output, format);
+		handler = new VLRSecFileH(output, format);
 	}
 	handler->fromCsv(input);
 	delete handler;
 }
 
 /*creates block or vlr handler. please destroy after*/
-FileHandler* getHandler(string name){
+VLRFileHandler* getHandler(string name){
 	fstream fs(name);
 	char type;
 	fs.read(&type,1);
 	fs.close();
 	if(type>=0 && type<=4)
-		return new BlockFileHandler(name);
+		return new VLRBlockFileH(name);
 	else
-		return new VLRFileHandler(name);
+		return new VLRSecFileH(name);
 }
 
 void exportToCsv(int& currentArgument, char* argv[]) {
 	//todo errors when wrong number of arg
 	string input(argv[++currentArgument]);
 	string output(argv[++currentArgument]);
-	FileHandler* handler=getHandler(input);
+	VLRFileHandler* handler=getHandler(input);
 	handler->toCsv(output);
 	delete handler;
 }
 
 /*creates block or vlr handler. please destroy after*/
-FileHandler* getNewHandler(int& currentArgument, char* argv[],string format){
+VLRFileHandler* getNewHandler(int& currentArgument, char* argv[],string format){
 	//todo errors when wrong number of arg
 	string next(argv[++currentArgument]);
 	if(next=="-b"){
 		int bSize=atoi(argv[++currentArgument]);
 		string handlerName=argv[++currentArgument];
-		return new BlockFileHandler(handlerName,bSize,format);
+		return new VLRBlockFileH(handlerName,bSize,format);
 	}else{
 		string handlerName=argv[currentArgument];
-		FileHandler* handler=new VLRFileHandler(handlerName,format);
+		VLRFileHandler* handler=new VLRSecFileH(handlerName,format);
 		return handler;
 	}
 
@@ -104,10 +104,10 @@ FileHandler* getNewHandler(int& currentArgument, char* argv[],string format){
 void performUnion(int& currentArgument, char* argv[]) {
 	string input1Name(argv[++currentArgument]);
 	string input2Name(argv[++currentArgument]);
-	FileHandler* input1 = getHandler(input1Name);
-	FileHandler* input2 = getHandler(input2Name);
+	VLRFileHandler* input1 = getHandler(input1Name);
+	VLRFileHandler* input2 = getHandler(input2Name);
 	string format=input1->getFormatAsString();
-	FileHandler* output = getNewHandler(currentArgument, argv,format);
+	VLRFileHandler* output = getNewHandler(currentArgument, argv,format);
 	RelationalAlgebra processor;
 	processor.unionOperator(*input1, *input2, *output);
 	delete input1;
@@ -115,8 +115,8 @@ void performUnion(int& currentArgument, char* argv[]) {
 	delete output;
 }
 
-string obtainCombinedFormat(FileHandler* handler1,
-		FileHandler* handler2) {
+string obtainCombinedFormat(VLRFileHandler* handler1,
+		VLRFileHandler* handler2) {
 	string combinationFormat = handler1->getFormatAsString() + ",i4,"
 			+ handler2->getFormatAsString();
 	return combinationFormat;
@@ -126,9 +126,9 @@ string obtainCombinedFormat(FileHandler* handler1,
 void performProduct(int& currentArgument, char* argv[]) {
 	string input1Name(argv[++currentArgument]);
 	string input2Name(argv[++currentArgument]);
-	FileHandler* input1 = getHandler(input1Name);
-	FileHandler* input2 = getHandler(input2Name);
-	FileHandler* output = getNewHandler(currentArgument, argv,obtainCombinedFormat(input1,input2));
+	VLRFileHandler* input1 = getHandler(input1Name);
+	VLRFileHandler* input2 = getHandler(input2Name);
+	VLRFileHandler* output = getNewHandler(currentArgument, argv,obtainCombinedFormat(input1,input2));
 	RelationalAlgebra processor;
 	processor.productOperator(*input1, *input2, *output);
 	delete input1;
@@ -136,7 +136,7 @@ void performProduct(int& currentArgument, char* argv[]) {
 	delete output;
 }
 
-string getProjectionFormat(FileHandler* handler, string positions){
+string getProjectionFormat(VLRFileHandler* handler, string positions){
 	string format=handler->getFormatAsString();
 	replace(format.begin(), format.end(), ',', ' ');
 	replace(positions.begin(), positions.end(), ',', ' ');
@@ -160,10 +160,10 @@ string getProjectionFormat(FileHandler* handler, string positions){
 
 void performProjection(int& currentArgument, char* argv[]) {
 	string inputName(argv[++currentArgument]);
-	FileHandler* input = getHandler(inputName);
+	VLRFileHandler* input = getHandler(inputName);
 	string formatPos(argv[++currentArgument]);
 	string format=getProjectionFormat(input,formatPos);
-	FileHandler* output = getNewHandler(currentArgument, argv, format);
+	VLRFileHandler* output = getNewHandler(currentArgument, argv, format);
 	RelationalAlgebra processor;
 	processor.projectionOperator(*input, *output, "0,"+formatPos);//include id as first
 	delete input;
@@ -212,8 +212,8 @@ condition_t obtainCondition(char* argv[], int& currentArgument) {
 
 void performSelection(int& currentArgument, char* argv[]) {
 	string inputName(argv[++currentArgument]);
-	FileHandler* input = getHandler(inputName);
-	FileHandler* output = getNewHandler(currentArgument, argv,input->getFormatAsString());
+	VLRFileHandler* input = getHandler(inputName);
+	VLRFileHandler* output = getNewHandler(currentArgument, argv,input->getFormatAsString());
 	condition_t condition = obtainCondition(argv, currentArgument);
 	RelationalAlgebra processor;
 	processor.selectionOperator(*input, *output, condition);

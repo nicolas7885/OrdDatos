@@ -11,7 +11,7 @@
 #include <sys/types.h>
 #include <string>
 
-#include "FileHandlers/FileHandler.h"
+#include "FileHandlers/VLRFileHandler.h"
 #include "Index/BPlusTree.h"
 #include "VLRegistries/Field.h"
 
@@ -28,14 +28,14 @@ public:
 	RelationalAlgebra();
 	virtual ~RelationalAlgebra();
 	//primary operators
-	void unionOperator(FileHandler& input1,FileHandler& input2, FileHandler& output);
-	void selectionOperator(FileHandler& input, FileHandler& output,condition_t condition);
-	void projectionOperator(FileHandler& input, FileHandler& output, std::string selectionFields);
-	void productOperator(FileHandler& input1,FileHandler& input2, FileHandler& output);
-	void differenceOperator(FileHandler& input1,FileHandler& input2, FileHandler& output);
+	void unionOperator(VLRFileHandler& input1,VLRFileHandler& input2, VLRFileHandler& output);
+	void selectionOperator(VLRFileHandler& input, VLRFileHandler& output,condition_t condition);
+	void projectionOperator(VLRFileHandler& input, VLRFileHandler& output, std::string selectionFields);
+	void productOperator(VLRFileHandler& input1,VLRFileHandler& input2, VLRFileHandler& output);
+	void differenceOperator(VLRFileHandler& input1,VLRFileHandler& input2, VLRFileHandler& output);
 private:
 	bool compare(const VLRegistry &reg,condition_t condition);
-	void buildIndex(FileHandler& input2, BPlusTree& bTree);
+	void buildIndex(VLRFileHandler& input2, BPlusTree& bTree);
 };
 
 #endif /* SRC_RELATIONALALGEBRA_H_ */

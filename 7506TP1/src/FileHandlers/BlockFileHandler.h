@@ -5,14 +5,12 @@
  *      Author: nicolas
  */
 
-#ifndef SRC_FILEHANDLERS_BLOCKFILEHANDLER_H_
-#define SRC_FILEHANDLERS_BLOCKFILEHANDLER_H_
+#ifndef SRC_FILEHANDLERS_BlockFileHandler_H_
+#define SRC_FILEHANDLERS_BlockFileHandler_H_
 
-#include <iostream>
 #include <string>
 #include <vector>
 
-#include "../VLRegistries/VLRegistry.h"
 #include "FileHandler.h"
 
 #define INVALID_BSIZE -1
@@ -21,30 +19,27 @@ class BlockFileHandler : public FileHandler{
 	char bSize;
 	std::vector<char> byteMap;
 	ulint currRelPos;//rel pos
-	std::vector<VLRegistry> readBuffer;
-	uint bufferPos;
 
 public:
 	BlockFileHandler(std::string path);
-	BlockFileHandler(std::string path, uint bSize, std::string format);
+	BlockFileHandler(std::string path, uint bSize);
 	virtual ~BlockFileHandler();
-	int write(const std::vector<VLRegistry> &data);
-	int write(const std::vector<VLRegistry> &data,uint relPos);
-	void read(std::vector<VLRegistry> &data);
-	void read(std::vector<VLRegistry> &data,uint relPos);
-	virtual ulint writeNext(const VLRegistry & reg);
-	virtual bool readNext(VLRegistry &reg);
+	int write(const std::vector<char> &data);
+	int write(const std::vector<char> &data,uint relPos);
+	void read(std::vector<char> &data);
+	uint read(std::vector<char> &data,uint relPos);
+	virtual ulint writeNext(const std::vector<char> &data);
+	virtual bool readNext(std::vector<char> &data);
 	virtual uint tellg();
-	virtual bool get(uint relPos, int id, VLRegistry& result);
 	void deleteBlock(uint relPos);
 	virtual bool eof();
+	virtual void restartBuffersToBeginning();
 protected:
 	ulint calculateOffset(ulint relPos);
 	virtual int writeBin(uint relPos, const std::vector<char>& serializedData);
-	virtual void restartBuffersToBeginning();
 private:
 	uint blockSizeInBytes();
 	void rewriteByteMap();
 };
 
-#endif /* SRC_FILEHANDLERS_BLOCKFILEHANDLER_H_ */
+#endif /* SRC_FILEHANDLERS_BlockFileHandler_H_ */

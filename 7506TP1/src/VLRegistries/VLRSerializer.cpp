@@ -85,8 +85,9 @@ void VLRSerializer::serializeReg(std::vector<char>& serializedData, const VLRegi
 	}
 }
 
-/*pre: data has less thn 255 registries
- * post:adds to end of serialized data the serialized block*/
+/*pre: data has less thn 256 registries
+ * post:adds to end of serialized data the serialized block
+ * addds in first pos number of reg*/
 void VLRSerializer::serializeBlock(std::vector<char>& serializedData,
 		const std::vector<VLRegistry>& data) {
 	//todo check amount of reg

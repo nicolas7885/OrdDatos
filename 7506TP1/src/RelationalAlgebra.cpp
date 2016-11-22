@@ -26,8 +26,8 @@ RelationalAlgebra::~RelationalAlgebra() {
 /*pre: input 1 and 2 opened and valid, have compatible format with output. Output opened and valid
  * post:reads all input 1 writing it into output. Then reads all input two and writes it into output.
  * Does not check for duplicates.*/
-void RelationalAlgebra::unionOperator(FileHandler& input1, FileHandler& input2,
-		FileHandler& output) {
+void RelationalAlgebra::unionOperator(VLRFileHandler& input1, VLRFileHandler& input2,
+		VLRFileHandler& output) {
 	input1.restartBuffersToBeginning();
 	VLRegistry reg;
 	while(input1.readNext(reg)){
@@ -43,8 +43,8 @@ void RelationalAlgebra::unionOperator(FileHandler& input1, FileHandler& input2,
  * selection fields is format including id. each pos is the in vector number of the field.
  * field 0 is the corresponding to the id of the reg. may repeat an input field number and/or commute them.
  * post:writes output with all the reg of input following selection Fields.*/
-void RelationalAlgebra::projectionOperator(FileHandler& input,
-		FileHandler& output, std::string selectionFields) {
+void RelationalAlgebra::projectionOperator(VLRFileHandler& input,
+		VLRFileHandler& output, std::string selectionFields) {
 	std::replace(selectionFields.begin(), selectionFields.end(), ',', ' ');
 	input.restartBuffersToBeginning();
 	VLRegistry oldReg;
@@ -69,8 +69,8 @@ void RelationalAlgebra::projectionOperator(FileHandler& input,
  * (i.e. if block file, sum of registries size not bigger than block size)
  * post:for each registry in input 1, reads every registry in input2,
  *  and writes the "union" between both registries and writes it into output*/
-void RelationalAlgebra::productOperator(FileHandler& input1,
-		FileHandler& input2, FileHandler& output) {
+void RelationalAlgebra::productOperator(VLRFileHandler& input1,
+		VLRFileHandler& input2, VLRFileHandler& output) {
 	input1.restartBuffersToBeginning();
 	VLRegistry reg1;
 	while(input1.readNext(reg1)){
@@ -104,7 +104,7 @@ bool RelationalAlgebra::compare(const VLRegistry &reg,condition_t condition){
 
 /*pre: input and output open and valid. They both have same format
  * filter takes a field and determines if it goes or not */
-void RelationalAlgebra::selectionOperator(FileHandler& input, FileHandler& output,
+void RelationalAlgebra::selectionOperator(VLRFileHandler& input, VLRFileHandler& output,
 		condition_t condition){
 	input.restartBuffersToBeginning();
 	VLRegistry reg;
@@ -116,7 +116,7 @@ void RelationalAlgebra::selectionOperator(FileHandler& input, FileHandler& outpu
 
 #include "Index/BPlusTree.h"
 
-void RelationalAlgebra::buildIndex(FileHandler& input2,BPlusTree& bTree) {
+void RelationalAlgebra::buildIndex(VLRFileHandler& input2,BPlusTree& bTree) {
 	input2.restartBuffersToBeginning();
 	uint regPos=input2.tellg();
 	VLRegistry reg;
@@ -131,8 +131,8 @@ void RelationalAlgebra::buildIndex(FileHandler& input2,BPlusTree& bTree) {
 /*pre: input 1 and 2 opened and valid, have compatible format with output.
  * Input2 must have unique id's for the index. Else 2nd reg with same id replaces 1st.
  * post: Puts into output all the reg of input1 that are not in input2. Equality determined by id.*/
-void RelationalAlgebra::differenceOperator(FileHandler& input1,
-		FileHandler& input2, FileHandler& output) {
+void RelationalAlgebra::differenceOperator(VLRFileHandler& input1,
+		VLRFileHandler& input2, VLRFileHandler& output) {
 	/*todo difference
 	 * idea: build a primary, exhaustive, index*/
 	BPlusTree bTree("tempIndex.bin");

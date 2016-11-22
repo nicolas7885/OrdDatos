@@ -1,56 +1,59 @@
 /*
- * VLRFileHandler.h
+ * FileHandler.h
  *
- *  Created on: Sep 24, 2016
+ *  Created on: Sep 8, 2016
  *      Author: nicolas
  */
 
-#ifndef SRC_FILEHANDLERS_VLRFILEHANDLER_H_
-#define SRC_FILEHANDLERS_VLRFILEHANDLER_H_
 
-#include "FileHandler.h"
+#ifndef VLRFILEHANDLER_H_
+#define VLRFILEHANDLER_H_
 
-typedef unsigned long int regSize_t;
+#include <fstream>
+#include <string>
+#include <vector>
 
-struct PointerToFree{
-	ulint pos;
-	ulint size;
-	ulint pointerToNext;
-};
+#include "../VLRegistries/Field.h"
+#include "../VLRegistries/VLRegistry.h"
 
+class FileHandler;
 
-class VLRFileHandler: public FileHandler {
-	ulint firstFreePtr;
-	uint lastRelPos;
+#define CHUNK_SIZE 512
+#define METADATA_SIZE CHUNK_SIZE
+#define FORMAT_SIZE_POS 1
 
+typedef unsigned int uint;
+typedef unsigned long int ulint;
+
+class VLRFileHandler {
+protected:
+	FileHandler* fileP;
 public:
-	VLRFileHandler(std::string path);
-	VLRFileHandler(std::string path, std::string format);
+	VLRFileHandler(FileHandler* file);
 	virtual ~VLRFileHandler();
-	bool read(ulint relPos, VLRegistry &reg);
-	virtual ulint writeNext(const VLRegistry & reg);
-	virtual bool readNext(VLRegistry &reg);
-	virtual uint tellg();
-	virtual bool get(uint relPos, int id, VLRegistry& result);
-	void deleteReg(ulint relPos);
+	/*writes reg in next possible position
+	 *Does nothing and returns -1 if EOF is reached before writing.
+	 * If write is succesful returns num of block where it ended in.*/
+	virtual ulint writeNext(const VLRegistry & reg)=0;
+	/*reads the next valid registry*
+	 * Does nothing and returns false if EOF is reached before reading into reg
+	 * If EOF is reached stops reading, and returns true.*/
+	virtual bool readNext(VLRegistry &reg)=0;
+	/*gives the rel position of the last reg to be read*/
+	virtual uint tellg()=0;
+	/*obtains reg at relPos with id matching if possible and returns true.
+	 * returns false if not found or out of bounds*/
+	virtual bool get(uint relPos, int id, VLRegistry& result)=0;
+	virtual bool eof();
+	std::string getFormatAsString();
+	void toCsv(std::string outputPath);
+	void fromCsv(std::string sourcePath);
+	virtual void restartBuffersToBeginning()=0;
 
 protected:
-	virtual ulint calculateOffset(ulint relPos);
-	virtual void restartBuffersToBeginning();
-
-private:
-	regSize_t readSize();
-	char readType();
-	void read(VLRegistry& reg);
-	void writePointerToFree(ulint freeSpacePos, ulint freeSpaceSize,ulint nextFreePointer);
-	PointerToFree readPointerToFree(ulint relPos);
-	void updateMetadata();
-	void updateLinkedList(const PointerToFree& prevFreePointer,const ulint nextPointer);
-	ulint findPosToWriteAndUpdateList(std::vector<char>& serializedData);
-
-	virtual int writeBin(uint pos, const std::vector<char>& serializedData,const char dataType);
-	regSize_t replaceRegWithFreePointer(ulint pos, ulint nextFreePointerPos);
-	ulint findPointerInsertionPos(ulint pos, PointerToFree& prevFreePointer);
+	void setFormat(std::string format);
+	std::vector<FieldType> getFormatAsTypes();
+	void regToCsv(VLRegistry &reg, std::fstream& output);
 };
 
-#endif /* SRC_FILEHANDLERS_VLRFILEHANDLER_H_ */
+#endif /* VLRFILEHANDLER_H_ */

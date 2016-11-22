@@ -101,7 +101,7 @@ void VLRUnserializer::initializeRegAsEmpty(VLRegistry& newReg) {
 	}
 }
 
-void VLRUnserializer::reziseBlock(int newSize, std::vector<VLRegistry>& block) {
+void VLRUnserializer::reziseBlock(uint newSize, std::vector<VLRegistry>& block) {
 	VLRegistry newReg;
 	block.resize(newSize, newReg);
 }
@@ -110,7 +110,7 @@ void VLRUnserializer::reziseBlock(int newSize, std::vector<VLRegistry>& block) {
  * post: fills block with the unserialized registries*/
 void VLRUnserializer::unserializeBlock(std::vector<VLRegistry>& block,
 		const std::vector<char>& serializedData) {
-	reziseBlock(serializedData[0], block);
+	reziseBlock((unsigned char)serializedData[0], block);
 	dataIt_t dataIt=serializedData.begin();
 	dataIt++;//avoid num of reg
 	for(int i=0; i<serializedData[0]; i++){
