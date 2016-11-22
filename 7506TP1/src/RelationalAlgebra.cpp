@@ -9,9 +9,8 @@
 
 #include <algorithm>
 #include <sstream>
-#include <string>
 
-#include "VLRegistries/Field.h"
+#include "Index/BNode.h"
 #include "VLRegistries/VLRegistry.h"
 
 RelationalAlgebra::RelationalAlgebra() {

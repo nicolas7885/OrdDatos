@@ -8,12 +8,13 @@
 #ifndef SRC_INDEX_TREETEST_H_
 #define SRC_INDEX_TREETEST_H_
 
-#include <limits>
 #include <iostream>
+#include <limits>
 
+#include "BNode.h"
 #include "BPlusTree.h"
 
-#define SHOW_SUCCESS_IN_CONSOLE false
+#define SHOW_SUCCESS_IN_CONSOLE true
 
 void insertManyNodes(const int amountOfNodes) {
 	bool failed=false;

@@ -5,17 +5,19 @@
  *      Author: nicolas
  */
 
-#include "../Index/BPlusTree.h"
+#include "BPlusTree.h"
 
-#include <iostream>
+#include <algorithm>
+#include <iterator>
+
+#include "BNode.h"
+
+#define BLOCK_SIZE 1
 
 //overrides previous index at file
 BPlusTree::BPlusTree(std::string fileName)
-:file(fileName,std::ios::in | std::ios::out | std::ios::binary | std::ios::trunc),
+:file(fileName,BLOCK_SIZE),
  last(0){
-	if(!file) {
-		std::cout<<"error creating tree file"<<std::endl;
-	}
 	root=new LeafNode(this);
 	//todo be able to read existing index
 }
@@ -23,7 +25,6 @@ BPlusTree::BPlusTree(std::string fileName)
 BPlusTree::~BPlusTree(){
 	//todo save last pos
 	delete root;
-	file.close();
 }
 
 void BPlusTree::insert(pair_t element){
@@ -42,24 +43,16 @@ bool BPlusTree::find(int key,uint& result){
 }
 
 /*writes node into appropiate pos*/
-void BPlusTree::write(std::vector<int>& nodeData, uint relPos) {
-	file.seekp(relPos*NODE_SIZE);
-	file.write((char*)&nodeData[0],NODE_SIZE);
+void BPlusTree::write(std::vector<char>& nodeData, uint relPos) {
+	file.write(nodeData,relPos);
 }
 
 /*gets serialized data of node in relPos and stores in node data*/
-void BPlusTree::read(std::vector<int>& nodeData, uint relPos) {
-	file.seekg(relPos*NODE_SIZE);
-	file.read((char*)&nodeData[0],NODE_SIZE);
+void BPlusTree::read(std::vector<char>& nodeData, uint relPos) {
+	file.read(nodeData,relPos);
 }
 
 uint BPlusTree::getNextPos() {
 	return ++last;
-}
-
-//checks if file exists
-bool BPlusTree::checkFileExistance(std::string fileName){
-	std::ifstream fs(fileName);
-	return fs;
 }
 

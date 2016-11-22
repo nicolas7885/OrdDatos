@@ -4,11 +4,24 @@
  *  Created on: Nov 5, 2016
  *      Author: nicolas
  */
-#include "BPlusTree.h"
+
 #include "BNode.h"
+
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
+
+#include "BPlusTree.h"
 
 typedef std::vector<int>::iterator intIt_t;
 typedef std::vector<uint>::iterator uintIt_t;
+
+static void insertAsChar(std::vector<char>& data, int value){
+	char* cp= reinterpret_cast<char*>(&value);
+	for(uint i=0; i<sizeof(value); i++){
+		data.push_back(*(cp+i));
+	}
+}
 
 TreeNode::TreeNode(BPlusTree* tree,uint height, uint pos)
 :tree(tree),
@@ -24,8 +37,14 @@ uint TreeNode::getHeight(){
 }
 
 TreeNode* TreeNode::read(BPlusTree* tree,uint relPos) {
-	std::vector<int> data(NODE_SIZE/sizeof(int));
-	tree->read(data,relPos);
+	std::vector<char> serializedData;
+	tree->read(serializedData,relPos);
+	//get data as ints for easier handling
+	std::vector<int> data;
+	for(uint i=0; i<=serializedData.size(); i+=sizeof(int)){
+		int* intp=reinterpret_cast<int *>(&serializedData[i]);
+		data.push_back(*intp);
+	}
 	intIt_t dataIt=data.begin()+2;
 	int load=data[1];
 	TreeNode* node;
@@ -105,16 +124,15 @@ void InnerNode::insert(int key,uint child){
 
 /*writes in file the data of the node(complete rewrite)*/
 void InnerNode::write() {
-	std::vector<int> data;
-	data.push_back(height);
-	data.push_back(load);
+	std::vector<char> data;
+	insertAsChar(data,height);
+	insertAsChar(data,load);
 	for(intIt_t it=keys.begin();it!=keys.end(); it++){
-		data.push_back(*it);
+		insertAsChar(data,*it);
 	}
 	for(uintIt_t it=children.begin();it!=children.end(); it++){
-		data.push_back(*it);
+		insertAsChar(data,*it);
 	}
-	data.resize(NODE_SIZE/sizeof(int));//should be same or bigger
 	tree->write(data,relPos);
 }
 
@@ -197,15 +215,14 @@ void LeafNode::changeNext(uint next){
 
 /*writes in tree the data of the node(complete rewrite)*/
 void LeafNode::write() {
-	std::vector<int> data;
-	data.push_back(height);
-	data.push_back(load);
+	std::vector<char> data;
+	insertAsChar(data,height);
+	insertAsChar(data,load);
 	for(std::vector<pair_t>::iterator it=elements.begin();it!=elements.end(); it++){
-		data.push_back(it->key);
-		data.push_back(it->value);
+		insertAsChar(data,it->key);
+		insertAsChar(data,it->value);
 	}
-	data.push_back(next);
-	data.resize(NODE_SIZE/sizeof(int));//should be same or bigger
+	insertAsChar(data,next);
 	tree->write(data,relPos);
 }
 

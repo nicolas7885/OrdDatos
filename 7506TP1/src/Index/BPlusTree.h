@@ -9,17 +9,19 @@
 #define SRC_INDEX_BPLUSTREE_H_
 
 #include <string>
-#include <fstream>
 #include <vector>
 
-#include "../Index/BNode.h"
+#include "../FileHandlers/BlockFileHandler.h"
+
+struct pair_t;
+class TreeNode;
 
 typedef unsigned int uint;
 
 class BPlusTree {
 private:
 	TreeNode* root;
-	std::fstream file;
+	BlockFileHandler file;
 	uint last;
 
 public:
@@ -28,13 +30,9 @@ public:
 	virtual ~BPlusTree();
 	void insert(pair_t element);
 	bool find(int key,uint& result);
-	void write(std::vector<int>& nodeData, uint relPos);
-	void read(std::vector<int>& nodeData, uint relPos);
+	void write(std::vector<char>& nodeData, uint relPos);
+	void read(std::vector<char>& nodeData, uint relPos);
 	uint getNextPos();
-
-private:
-	bool checkFileExistance(std::string fileName);
-
 };
 
 #endif /* SRC_INDEX_BPLUSTREE_H_ */
