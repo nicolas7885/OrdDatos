@@ -14,7 +14,8 @@
 #include "BNode.h"
 #include "BPlusTree.h"
 
-#define SHOW_SUCCESS_IN_CONSOLE true
+#define SHOW_SUCCESS_IN_CONSOLE false
+
 
 void insertManyNodes(const int amountOfNodes) {
 	bool failed=false;
@@ -96,6 +97,9 @@ void runTreeTests(){
 		if(!failed && SHOW_SUCCESS_IN_CONSOLE)
 			std::cout <<"replace insert success"<<std::endl;
 	}
+	const int NODE_SIZE= 512*(1<<BLOCK_SIZE);
+	const int N=(NODE_SIZE-(2+1)*sizeof(int))/(2*sizeof(int));
+	const int M= (NODE_SIZE-3*sizeof(int))/(sizeof(int)+sizeof(unsigned int));
 	{
 		//put many elements in(should be one node only), in order, can find one of them
 		const int amountOfNodes=M-2;

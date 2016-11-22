@@ -27,13 +27,18 @@ TreeNode::TreeNode(BPlusTree* tree,uint height, uint pos)
 :tree(tree),
  height(height),
  relPos(pos),
- load(0)
+ load(0),
+ overflowed(0)
 {}
 
 TreeNode::~TreeNode(){}
 
 uint TreeNode::getHeight(){
 	return height;
+}
+
+bool TreeNode::shouldSplit() {
+	return overflowed;
 }
 
 TreeNode* TreeNode::read(BPlusTree* tree,uint relPos) {
@@ -133,7 +138,8 @@ void InnerNode::write() {
 	for(uintIt_t it=children.begin();it!=children.end(); it++){
 		insertAsChar(data,*it);
 	}
-	tree->write(data,relPos);
+	if(! tree->write(data,relPos))
+		overflowed=true;
 }
 
 /*returns true if found and writes value to result.
@@ -144,14 +150,6 @@ bool InnerNode::find(int key,uint& result) {
 	bool found=nextNode->find(key,result);
 	delete nextNode;
 	return found;
-}
-
-bool InnerNode::shouldSplit() {
-	if(keys.size()==N){
-		return true;
-	}else{
-		return false;
-	}
 }
 
 /*splits node, creating new node, and adding key and child reference to parent.*/
@@ -168,7 +166,7 @@ void InnerNode::split(InnerNode* parent) {
 	children.resize(halfSize+1);
 	load=keys.size();
 	InnerNode brother(tree,height,brotherPos,brotherKeys,brotherChildren);
-
+	overflowed=false;
 	this->write();
 	parent->insert(upKey,brotherPos);
 }
@@ -223,7 +221,8 @@ void LeafNode::write() {
 		insertAsChar(data,it->value);
 	}
 	insertAsChar(data,next);
-	tree->write(data,relPos);
+	if(! tree->write(data,relPos))
+		overflowed=true;
 }
 
 /*returns true if found and writes value to result.
@@ -238,15 +237,6 @@ bool LeafNode::find(int key, uint&result){
 	return false;
 }
 
-/*returns true if node should be split*/
-bool LeafNode::shouldSplit() {
-	if(elements.size()==M){
-		return true;
-	}else{
-		return false;
-	}
-}
-
 /*splits node, creating new node, and adding key and child reference to parent.
  * If node was root, changes its relPos to next one available*/
 void LeafNode::split(InnerNode* parent) {
@@ -259,6 +249,7 @@ void LeafNode::split(InnerNode* parent) {
 	uint brotherPos=tree->getNextPos();
 	LeafNode brother(tree,brotherPos,brotherElements,next);
 	next=brotherPos;
+	overflowed=false;
 	this->write();
 	parent->insert(brotherElements[0].key,brotherPos);
 }

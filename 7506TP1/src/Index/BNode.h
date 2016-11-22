@@ -13,11 +13,6 @@
 class BPlusTree;
 class InnerNode;
 
-//NODE_SIZE must be multiple of sizeof(int) and a power of 2
-#define NODE_SIZE 512
-#define N (NODE_SIZE-(2+1)*sizeof(int))/(2*sizeof(int))
-#define M (NODE_SIZE-3*sizeof(int))/(sizeof(int)+sizeof(unsigned int))
-
 /*implementacion de arbol para unsigned int como valor e int como indice.
  * Maneja overflows, pero no underflows(no borra elementos)*/
 typedef unsigned int uint;
@@ -33,6 +28,7 @@ protected:
 	uint height;
 	uint relPos;
 	uint load;
+	bool overflowed;
 public:
 	TreeNode(BPlusTree* tree, uint height, uint pos);
 	virtual ~TreeNode();
@@ -45,7 +41,7 @@ public:
 	 * if not, returns false and doesnt change result */
 	virtual bool find(int key, uint&result)=0;
 	/*returns true if node should be split*/
-	virtual bool shouldSplit()=0;
+	bool shouldSplit();
 	/*splits node, creating new node, and adding key and child reference to parent.*/
 	virtual void split(InnerNode* parent)=0;
 	/*reads new node from tree*/
@@ -66,7 +62,6 @@ public:
 	void insert(int key,uint child);
 	void write();
 	bool find(int key, uint&result);
-	bool shouldSplit();
 	void split(InnerNode* parent);
 };
 
@@ -83,7 +78,6 @@ public:
 	void changeNext(uint next);
 	void write();
 	bool find(int key, uint&result);
-	bool shouldSplit();
 	void split(InnerNode* parent);
 
 private:

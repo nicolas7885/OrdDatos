@@ -12,8 +12,6 @@
 
 #include "BNode.h"
 
-#define BLOCK_SIZE 1
-
 //overrides previous index at file
 BPlusTree::BPlusTree(std::string fileName)
 :file(fileName,BLOCK_SIZE),
@@ -42,9 +40,12 @@ bool BPlusTree::find(int key,uint& result){
 	return root->find(key,result);
 }
 
-/*writes node into appropiate pos*/
-void BPlusTree::write(std::vector<char>& nodeData, uint relPos) {
-	file.write(nodeData,relPos);
+/*writes node into appropiate pos. returns true if write succesfull, false if overflow*/
+bool BPlusTree::write(std::vector<char>& nodeData, uint relPos) {
+	if(file.write(nodeData,relPos))
+		return false;
+	else
+		return true;
 }
 
 /*gets serialized data of node in relPos and stores in node data*/

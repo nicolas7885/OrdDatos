@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "../FileHandlers/BlockFileHandler.h"
+#define BLOCK_SIZE 0
 
 struct pair_t;
 class TreeNode;
@@ -30,7 +31,7 @@ public:
 	virtual ~BPlusTree();
 	void insert(pair_t element);
 	bool find(int key,uint& result);
-	void write(std::vector<char>& nodeData, uint relPos);
+	bool write(std::vector<char>& nodeData, uint relPos);
 	void read(std::vector<char>& nodeData, uint relPos);
 	uint getNextPos();
 };
