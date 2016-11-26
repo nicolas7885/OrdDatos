@@ -35,7 +35,7 @@ void BPlusTree::insert(pair_t element){
 	}
 }
 
-/*return true and writes into rersult if found. else returns false*/
+/*return true and writes into result if found. else returns false*/
 bool BPlusTree::find(int key,uint& result){
 	return root->find(key,result);
 }

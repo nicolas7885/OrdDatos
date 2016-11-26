@@ -132,8 +132,6 @@ void RelationalAlgebra::buildIndex(VLRFileHandler& input2,BPlusTree& bTree) {
  * post: Puts into output all the reg of input1 that are not in input2. Equality determined by id.*/
 void RelationalAlgebra::differenceOperator(VLRFileHandler& input1,
 		VLRFileHandler& input2, VLRFileHandler& output) {
-	/*todo difference
-	 * idea: build a primary, exhaustive, index*/
 	BPlusTree bTree("tempIndex.bin");
 	buildIndex(input2,bTree);
 	//check no equal reg in dif for each
@@ -142,10 +140,8 @@ void RelationalAlgebra::differenceOperator(VLRFileHandler& input1,
 	while(input1.readNext(reg)){
 		bool shouldInclude=true;
 		Field f=reg.getField(0);
-		uint relPos;
-		if(bTree.find(f.value.i4,relPos)){
-			VLRegistry reg2;
-			if(input2.get(relPos,f.value.i4,reg2) && reg==reg2)
+		uint relPos; VLRegistry reg2;
+		if(bTree.find(f.value.i4,relPos) && input2.get(relPos,f.value.i4,reg2) && reg==reg2){
 				shouldInclude=false;
 		}
 		if(shouldInclude)
@@ -153,6 +149,31 @@ void RelationalAlgebra::differenceOperator(VLRFileHandler& input1,
 	}
 }
 
+/*pre: input 1 and 2 open and valid. Output has appropiate format.
+ * input 2 has unique id corresponding to (external) id stored at fieldNumber of input 1.
+ * Both are of defualt id type type
+ * post: writes to output the combination of reg from input 1 and input 2 that have at fieldNumber
+ * of input 1 an external reference to input 2.
+ * Reg of output consist of fields from input 1 and its corresponding fields of input 2
+ * Does not repeat external reference field*/
+void RelationalAlgebra::naturalJoin(VLRFileHandler& input1,
+		VLRFileHandler& input2, VLRFileHandler& output, uint fieldNumber) {
+	BPlusTree bTree("tempIndex.bin");
+	buildIndex(input2,bTree);
+	input1.restartBuffersToBeginning();
+	VLRegistry reg;
+	while(input1.readNext(reg) && fieldNumber<reg.getNumOfFields()){
+		Field f=reg.getField(fieldNumber);
+		uint relPos; VLRegistry reg2;
+		if(f.type==I4 && bTree.find(f.value.i4,relPos) && input2.get(relPos,f.value.i4,reg2)){
+			VLRegistry outputReg=reg;
+			for(uint i=1; i<reg2.getNumOfFields();i++){
+				outputReg.addNewField(reg2.getField(i));
+			}
+			output.writeNext(outputReg);
+		}
+	}
+}
+
 //todo agrupation
-//todo wierd union
 //todo intersection

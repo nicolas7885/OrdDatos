@@ -10,6 +10,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>
 
 #include "FileHandlers/VLRBlockFileH.h"
 #include "FileHandlers/VLRSecFileH.h"
@@ -21,36 +22,52 @@ using namespace std;
 
 #define FORMAT "i1,i2,i4,sD,d,dt"
 
-void fillRegistry(VLRegistry& reg) {
+void fillRegistry(VLRegistry& reg, string format) {
 	//set format
-	Field field;
-	field.value.i1 = 1;
-	field.type = I1;
-	reg.setField(1, field);
-	field.value.i2 = 512;
-	field.type = I2;
-	reg.setField(2, field);
-	field.value.i4 = 1024;
-	field.type = I4;
-	reg.setField(3, field);
-	field.s = "AABBCCDD";
-	field.type = SD;
-	reg.setField(4, field);
-	field.s = "aaaammdd";
-	field.type = D;
-	reg.setField(5, field);
-	field.s = "aaaammdd-hhmmss";
-	field.type = DT;
-	reg.setField(6, field);
+	std::replace(format.begin(), format.end(), ',', ' ');
+	std::stringstream ss(format);
+	std::string singleFieldString;uint i=1;
+	while(ss>>singleFieldString){
+		FieldType fieldType=Field::typeFromString(singleFieldString);
+		Field field;
+		field.type=fieldType;
+		switch(fieldType){
+		case I1:
+			field.value.i1 = 1;
+			break;
+		case I2:
+			field.value.i2 = 512;
+			break;
+		case I4:
+			field.value.i4 = 1025;
+			break;
+		case I8:
+			field.value.i8= 2048;
+			break;
+		case SL:
+		case SD:
+			field.s = "AABBCCDD";
+			break;
+		case D:
+			field.s = "aaaammdd";
+			break;
+		case DT:
+			field.s = "aaaammdd-hhmmss";
+			break;
+
+		}
+		reg.setField(i, field);
+		i++;
+	}
 }
 
-void loadBlock(const int cantRegAAgregar, VLRBlockFileH& handler) {
+void loadBlock(const int cantRegAAgregar, VLRBlockFileH& handler, string format) {
 	vector<VLRegistry> block;
 	for (int i = 1; i <= cantRegAAgregar; i++) {
 		//create reg
-		VLRegistry reg(i, FORMAT);
+		VLRegistry reg(i, format);
 		//set format
-		fillRegistry(reg);
+		fillRegistry(reg, format);
 		block.push_back(reg);
 	}
 	handler.write(block);
@@ -61,7 +78,7 @@ void createBinBlockFile(string path) {
 	const int cantBloquesAAgregar = 2;
 	const int cantRegAAgregar = 20;
 	for (int i = 0; i < cantBloquesAAgregar; i++) {
-		loadBlock(cantRegAAgregar, handler);
+		loadBlock(cantRegAAgregar, handler, FORMAT);
 	}
 }
 
@@ -115,7 +132,7 @@ void runTests() {
 
 	//3 add another block and output
 	//out: 1 to 10, then 1 to 5, then 1 to 20
-	loadBlock(cantRegBloqueEspecial,newBlockHandler);
+	loadBlock(cantRegBloqueEspecial,newBlockHandler, FORMAT);
 	newBlockHandler.toCsv(ReadAndDeleteAndPutNewFile);
 
 	//4 read vlr file from csv, and output to other
@@ -140,13 +157,13 @@ void runTests() {
 	//6 add 2 reg and output
 	//out: 255,127, then 2 to 20, then 1 to 20, then 127
 	VLRegistry reg(255, FORMAT);
-	fillRegistry(reg);
+	fillRegistry(reg,FORMAT);
 	vlrHandler.writeNext(reg);
 	VLRegistry reg2(127, FORMAT);
-	fillRegistry(reg2);
+	fillRegistry(reg2,FORMAT);
 	vlrHandler.writeNext(reg2);
 	VLRegistry reg3(98, FORMAT);
-	fillRegistry(reg3);
+	fillRegistry(reg3,FORMAT);
 	vlrHandler.writeNext(reg3);
 	vlrHandler.toCsv(ReadAndDeleteAndPutNewFileVlr);
 
@@ -194,6 +211,41 @@ void runTests() {
 		VLRBlockFileH differenceHandler(binDifferenceFileName,0, FORMAT);
 		proccessor.differenceOperator(blockHandler1,selectionHandler, differenceHandler);
 		differenceHandler.toCsv(differenceFileName);
+	}
+	{//12 natural join and output
+		//prepare test files
+		string input1Name="testNatJoinI1.bin";
+		string input2Name="testNatJoinI2.bin";
+		string binNatJoinFileName="testNatJoin.bin";
+		string output="test12Csv";
+		string format1="i4,sD,i4";
+		VLRBlockFileH input1(input1Name,0,format1);
+		int cantReg = 10;
+		for (int i = 1; i <= cantReg; i++) {
+			VLRegistry reg(i, format1);
+			Field f;
+			f.value.i4=i; f.type=I4;
+			reg.setField(1,f);
+			f.s="bb"; f.type=SD;
+			reg.setField(2,f);
+			f.value.i4=cantReg+1-i; f.type=I4;
+			reg.setField(3,f);
+			input1.writeNext(reg);
+		}
+		string format2="sD";
+		VLRBlockFileH input2(input2Name,0,format2);
+		for(int i=1; i<=cantReg; i++){
+			VLRegistry reg(i, format2);
+			stringstream ss; ss<<"aaa"<<i;
+			Field f; f.s=ss.str(); f.type=SD;
+			reg.setField(1,f);
+			input2.writeNext(reg);
+		}
+		string formatOutput=format1+","+format2;
+		VLRBlockFileH NatJoinHandler(binNatJoinFileName,1,formatOutput);
+		//execute
+		proccessor.naturalJoin(input1,input2,NatJoinHandler,1);
+		NatJoinHandler.toCsv(output);
 	}
 }
 

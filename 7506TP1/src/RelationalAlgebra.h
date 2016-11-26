@@ -33,6 +33,8 @@ public:
 	void projectionOperator(VLRFileHandler& input, VLRFileHandler& output, std::string selectionFields);
 	void productOperator(VLRFileHandler& input1,VLRFileHandler& input2, VLRFileHandler& output);
 	void differenceOperator(VLRFileHandler& input1,VLRFileHandler& input2, VLRFileHandler& output);
+	void naturalJoin(VLRFileHandler& input1,VLRFileHandler& input2,
+			VLRFileHandler& output, uint fieldNumber);
 private:
 	bool compare(const VLRegistry &reg,condition_t condition);
 	void buildIndex(VLRFileHandler& input2, BPlusTree& bTree);
