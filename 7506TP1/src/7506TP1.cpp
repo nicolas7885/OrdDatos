@@ -221,6 +221,33 @@ void performSelection(int& currentArgument, char* argv[]) {
 	delete output;
 }
 
+void performDifference(int& currentArgument, char* argv[]){
+	string input1Name(argv[++currentArgument]);
+	string input2Name(argv[++currentArgument]);
+	VLRFileHandler* input1 = getHandler(input1Name);
+	VLRFileHandler* input2 = getHandler(input2Name);
+	VLRFileHandler* output = getNewHandler(++currentArgument, argv,input1->getFormatAsString());
+	RelationalAlgebra processor;
+	processor.differenceOperator(*input1, *input2, *output);
+	delete input1;
+	delete input2;
+	delete output;
+}
+
+void performNatJoin(int& currentArgument, char* argv[]){
+	string input1Name(argv[++currentArgument]);
+	string input2Name(argv[++currentArgument]);
+	VLRFileHandler* input1 = getHandler(input1Name);
+	VLRFileHandler* input2 = getHandler(input2Name);
+	string combinedFormat= input1->getFormatAsString()+","+ input2->getFormatAsString();
+	VLRFileHandler* output = getNewHandler(++currentArgument, argv,combinedFormat);
+	RelationalAlgebra processor;
+	processor.naturalJoin(*input1, *input2, *output, currentArgument);
+	delete input1;
+	delete input2;
+	delete output;
+}
+
 /*ugly interface, so hardcoded positions, repeated code and so on.*/
 void normalExecution(char* argv[]) {
 	int currentArgument = 1;
@@ -239,15 +266,19 @@ void normalExecution(char* argv[]) {
 		performProjection(currentArgument, argv);
 	} else if (mode == "-s") {
 		performSelection(currentArgument, argv);
+	} else if (mode == "-d") {
+		performSelection(currentArgument, argv);
+	} else if (mode == "-nj") {
+		performNatJoin(currentArgument, argv);
 	}
 }
 
-#include "tests.h"
-#include "Index/TreeTest.h"
+#include "tests.h" //comentar/descomentar para desactivar/activar tests
+#include "Index/TreeTest.h" //comentar/descomentar para desactivar/activar tests
 
 int main(int argc, char* argv[]) {
-	runTests();
-	runTreeTests();
-	//normalExecution(argv);
+	runTests();//comentar/descomentar para desactivar/activar tests
+	runTreeTests();//comentar para desactivar tests
+	//normalExecution(argv); //descomentar/comentar para activar/desactivar uso por consola
 	return 0;
 }
